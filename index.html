@@ -70,18 +70,18 @@ const COLS = [
 const PRIORITIES = ['Critical','High','Medium','Low'];
 const PRIORITY_COLOR = { Critical:'bg-red-100 text-red-700', High:'bg-orange-100 text-orange-700', Medium:'bg-yellow-100 text-yellow-700', Low:'bg-green-100 text-green-700' };
 const BOARD_ROSTER = [
-  { role:'President',               name:'Cherrelle J. Duncan, MPSA' },
-  { role:'1st Vice President',      name:'J. Goodwille Pierre, Esq.' },
-  { role:'2nd Vice President',      name:'Gethorio Davidson' },
-  { role:'Secretary',               name:'Rachel Gutierrez' },
-  { role:'Assistant Secretary',     name:'Deja Evans' },
-  { role:'Treasurer',               name:'Danita Collins' },
-  { role:'Parliamentarian',         name:'Danny Norris' },
-  { role:'Immediate Past President',name:'Brandon Denton' },
-  { role:'Membership Chair',        name:'Roselynn Ruth' },
-  { role:'Scholarships Chair',      name:'Dr. Kimberly Henderson' },
-  { role:'40th Anniversary Chair',  name:'Courtney Cunningham' },
-  { role:'Advisor',                 name:'Simone Wilson' },
+  { role:'President',               name:'Cherrelle J. Duncan, MPSA',  scope:'Administrative head of the Greater Houston Chapter. Provides research, technical assistance, organizes meetings, and maintains all chapter documents.' },
+  { role:'1st Vice President',      name:'J. Goodwille Pierre, Esq.',  scope:'Acts in absence of President. Chairs the Membership Committee and Community Service Committee. Prepares annual activity report with recommendations.' },
+  { role:'2nd Vice President',      name:'Gethorio Davidson',          scope:'Acts in absence of President and 1st VP. Chairs the Programs Committee. Assists President in all matters pertaining to the office.' },
+  { role:'Secretary',               name:'Rachel Gutierrez',           scope:'Executes Secretary duties for all meetings. Prepares agendas, records and circulates minutes, maintains membership roster and attendance records.' },
+  { role:'Assistant Secretary',     name:'Deja Evans',                 scope:'Works with Secretary to mail information to board and membership. Assists in preparing agendas, recording minutes, and maintaining membership records.' },
+  { role:'Treasurer',               name:'Danita Collins',             scope:'Receives all monies via Financial Secretary, maintains accurate records of receipts and disbursements, deposits funds, and pays authorized bills.' },
+  { role:'Parliamentarian',         name:'Danny Norris',               scope:'Assists presiding officer in interpreting local By-Laws per Robert\'s Rules of Order. Performs additional duties designated by the board.' },
+  { role:'Immediate Past President',name:'Brandon Denton',             scope:'Provides institutional knowledge and continuity. Supports transition of leadership and serves as a resource to the current executive board.' },
+  { role:'Membership Chair',        name:'Roselynn Ruth',              scope:'Leads recruitment of new members. Develops membership drives, designs membership applications, and manages the membership card program.' },
+  { role:'Scholarships Chair',      name:'Dr. Kimberly Henderson',     scope:'Oversees the scholarship program including the 40 for 40 Campaign. Manages selection process, award disbursements, and donor relationships.' },
+  { role:'40th Anniversary Chair',  name:'Courtney Cunningham',        scope:'Leads all planning and execution for the 40th Anniversary Weekend (June 5–7). Manages venue, run-of-show, honorees, and event logistics.' },
+  { role:'Advisor',                 name:'Simone Wilson',              scope:'Appointed by President to the Advisory Council. Solicits support from elected officials, assists in funding candidates for NFBPA programs, and attends semi-annual Advisory Council meetings.' },
 ];
 const MEMBERS = BOARD_ROSTER.map(b=>b.name);
 const MILESTONES_SEED = [
@@ -337,11 +337,13 @@ function BoardInfo({onClose}) {
             <thead><tr className="border-b border-gray-100 dark:border-[#2D4A6B]">
               <th className="text-left py-2 text-xs font-bold text-gray-400 uppercase">Role</th>
               <th className="text-left py-2 text-xs font-bold text-gray-400 uppercase">Name</th>
+              <th className="text-left py-2 text-xs font-bold text-gray-400 uppercase">Scope of Duties</th>
             </tr></thead>
             <tbody>{BOARD_ROSTER.map(m=>(
               <tr key={m.role} className="border-b border-gray-50 dark:border-[#2D4A6B] hover:bg-gray-50 dark:hover:bg-[#2D4A6B]">
-                <td className="py-2.5 text-gray-500 text-xs pr-4">{m.role}</td>
-                <td className="py-2.5 font-semibold text-[#1E3A5F] dark:text-gray-100">{m.name}</td>
+                <td className="py-2.5 text-gray-500 text-xs pr-4 font-semibold whitespace-nowrap">{m.role}</td>
+                <td className="py-2.5 font-semibold text-[#1E3A5F] dark:text-gray-100 pr-4 whitespace-nowrap">{m.name}</td>
+                <td className="py-2.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{m.scope}</td>
               </tr>
             ))}</tbody>
           </table>
