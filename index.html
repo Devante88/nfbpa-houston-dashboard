@@ -917,13 +917,17 @@ function App() {
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${saveStatus==='saved'?'bg-green-500':saveStatus==='error'?'bg-red-500':'bg-amber-400 animate-pulse'}`}></span>
               <span className="hidden lg:inline">{saveStatus==='saved'?'Saved':'Saving...'}</span>
             </div>
-            <Tip label="Undo last action (Ctrl+Z)">
-              <button onClick={()=>{dispatch({type:'UNDO'});toast('Undone.');}} disabled={!state.past.length}
-                className="px-2.5 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-[#2D4A6B] rounded-lg disabled:opacity-30 transition-colors font-medium">Undo</button>
+            <Tip label="Undo last action — reverses any mistake (Ctrl+Z)">
+              <button onClick={()=>{dispatch({type:'UNDO'});toast('\u21a9 Undone — action reversed.');}} disabled={!state.past.length}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg border-2 border-[#C8A951] text-[#1E3A5F] dark:text-[#C8A951] bg-white dark:bg-[#1A2E47] hover:bg-[#C8A951] hover:text-white dark:hover:bg-[#C8A951] dark:hover:text-[#1E3A5F] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm">
+                &#8617; Undo
+              </button>
             </Tip>
-            <Tip label="Redo last undone action (Ctrl+Y)">
-              <button onClick={()=>{dispatch({type:'REDO'});toast('Redone.');}} disabled={!state.future.length}
-                className="px-2.5 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-[#2D4A6B] rounded-lg disabled:opacity-30 transition-colors font-medium">Redo</button>
+            <Tip label="Redo — restore what was undone (Ctrl+Y)">
+              <button onClick={()=>{dispatch({type:'REDO'});toast('\u21aa Redone.');}} disabled={!state.future.length}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-[#2D4A6B] text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2D4A6B] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                &#8618; Redo
+              </button>
             </Tip>
             <Tip label="Add a new task (press N)">
               <button onClick={()=>setAdding(true)} className="px-3 py-1.5 bg-[#1E3A5F] text-white rounded-lg text-xs font-bold hover:bg-[#162d4a] transition-colors">+ Add Task</button>
