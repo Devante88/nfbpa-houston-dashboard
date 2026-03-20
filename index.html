@@ -27,14 +27,19 @@ body { font-family: 'Inter', sans-serif; margin: 0; }
 .modal-bg { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem; }
 .modal-card { background:white;border-radius:14px;max-width:660px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.25); }
 .dark .modal-card { background:#1A2E47;color:#e2e8f0; }
-.col-w { min-width:280px;max-width:280px; }
+.col-w { min-width:272px;max-width:272px; }
 .bar { transition: width 0.7s cubic-bezier(.4,0,.2,1); }
 .tip { position:relative; }
 .tip:hover .tip-box { display:block; }
 .tip-box { display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1E3A5F;color:white;font-size:11px;padding:5px 9px;border-radius:6px;white-space:nowrap;z-index:200;pointer-events:none; }
 .tip-box::after { content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1E3A5F; }
-.drag-over { background:#dbeafe!important; outline:2px dashed #3b82f6; outline-offset:-2px; }
-.dragging { opacity:0.5; transform:rotate(1deg); }
+.drag-over { background:rgba(200,169,81,0.08)!important; outline:2px dashed #C8A951; outline-offset:-2px; border-radius:12px; }
+.dragging { opacity:0.45; transform:rotate(1.5deg) scale(0.98); }
+.undo-btn { background:white; border:2px solid #C8A951; color:#1E3A5F; font-weight:700; padding:6px 12px; border-radius:8px; font-size:12px; cursor:pointer; transition:all 0.15s; }
+.undo-btn:hover:not(:disabled) { background:#C8A951; color:white; }
+.undo-btn:disabled { opacity:0.3; cursor:not-allowed; border-color:#e2e8f0; }
+.dark .undo-btn { background:#1A2E47; border-color:#C8A951; color:#e2e8f0; }
+.dark .undo-btn:hover:not(:disabled) { background:#C8A951; color:#1E3A5F; }
 @media print {
   .no-print { display:none!important; }
   body { background:white!important; color:#1E3A5F!important; }
@@ -42,6 +47,8 @@ body { font-family: 'Inter', sans-serif; margin: 0; }
 }
 .print-only { display:none; }
 input[type=range] { accent-color: #C8A951; }
+.card-hover { transition: box-shadow 0.15s, transform 0.1s; }
+.card-hover:hover { box-shadow: 0 4px 16px rgba(30,58,95,0.10); transform: translateY(-1px); }
 </style>
 </head>
 <body class="bg-[#F4F6F9] text-[#1E3A5F]">
@@ -63,18 +70,18 @@ const COLS = [
 const PRIORITIES = ['Critical','High','Medium','Low'];
 const PRIORITY_COLOR = { Critical:'bg-red-100 text-red-700', High:'bg-orange-100 text-orange-700', Medium:'bg-yellow-100 text-yellow-700', Low:'bg-green-100 text-green-700' };
 const BOARD_ROSTER = [
-  { role:'President',              name:'Cherrelle J. Duncan, MPSA' },
-  { role:'1st Vice President',     name:'J. Goodwille Pierre, Esq.' },
-  { role:'2nd Vice President',     name:'Gethorio Davidson' },
-  { role:'Secretary',              name:'Rachel Gutierrez' },
-  { role:'Assistant Secretary',    name:'Deja Evans' },
-  { role:'Treasurer',              name:'Anitra Spurlock' },
-  { role:'Parliamentarian',        name:'Danny Norris' },
+  { role:'President',               name:'Cherrelle J. Duncan, MPSA' },
+  { role:'1st Vice President',      name:'J. Goodwille Pierre, Esq.' },
+  { role:'2nd Vice President',      name:'Gethorio Davidson' },
+  { role:'Secretary',               name:'Rachel Gutierrez' },
+  { role:'Assistant Secretary',     name:'Deja Evans' },
+  { role:'Treasurer',               name:'Anitra Spurlock' },
+  { role:'Parliamentarian',         name:'Danny Norris' },
   { role:'Immediate Past President',name:'Brandon Denton' },
-  { role:'Membership Chair',       name:'Roselynn Ruth' },
-  { role:'Scholarships Chair',     name:'Dr. Kimberly Henderson' },
-  { role:'40th Anniversary Chair', name:'Courtney Cunningham' },
-  { role:'Advisor',                name:'Simone Wilson' },
+  { role:'Membership Chair',        name:'Roselynn Ruth' },
+  { role:'Scholarships Chair',      name:'Dr. Kimberly Henderson' },
+  { role:'40th Anniversary Chair',  name:'Courtney Cunningham' },
+  { role:'Advisor',                 name:'Simone Wilson' },
 ];
 const MEMBERS = BOARD_ROSTER.map(b=>b.name);
 const MILESTONES_SEED = [
@@ -171,47 +178,69 @@ const SEED = [
   {id:uid(),title:"Execute WBS 2025 sponsor benefits and reset relationship",owner:"Cherrelle J. Duncan, MPSA",due:"2026-04-01",priority:"Critical",status:"not-started",milestone:"m3",progress:0,notes:"Fulfill outstanding 2025 benefits before new ask.",history:[],deps:[]},
   {id:uid(),title:"Develop Government Partners / Black Agenda Project pitch — $36,000 target",owner:"Cherrelle J. Duncan, MPSA",due:"2026-05-01",priority:"Critical",status:"not-started",milestone:"m3",progress:0,notes:"Largest single sponsorship target in 2026 plan.",history:[],deps:[]},
   {id:uid(),title:"Launch 40 for 40 Campaign — $1,600 scholarship goal",owner:"J. Goodwille Pierre, Esq.",due:"2026-04-30",priority:"High",status:"not-started",milestone:"m3",progress:0,notes:"40 donors at $40 each for 40th anniversary scholarship.",history:[],deps:[]},
-  {id:uid(),title:"Secure Dine & Dialogue sponsorship — $2,500 Silver ask",owner:"Cherrelle J. Duncan, MPSA",due:"2026-04-15",priority:"High",status:"not-started",milestone:"m3",progress:0,notes:"Silver tier. July 24 fundraiser event.",history:[],deps:[]},
-  {id:uid(),title:"Collect board member quarterly donations — $25/quarter each",owner:"Anitra Spurlock",due:"2026-03-31",priority:"Medium",status:"not-started",milestone:"m3",progress:0,notes:"Board accountability per bylaws. Treasurer to track.",history:[],deps:[]},
-  {id:uid(),title:"Produce 2026 remaining programming calendar and speaker list",owner:"Gethorio Davidson",due:"2026-03-31",priority:"Critical",status:"not-started",milestone:"m4",progress:0,notes:"Identify gaps and speaker prospects for all remaining GBMs.",history:[],deps:[]},
-  {id:uid(),title:"Execute April 23 GBM — Cross-Racial Collaboration run of show",owner:"Gethorio Davidson",due:"2026-04-13",priority:"Critical",status:"not-started",milestone:"m4",progress:0,notes:"Finalize agenda, speaker, and logistics.",history:[],deps:[]},
-  {id:uid(),title:"Coordinate with 40th Anniversary Chair on GBM integration",owner:"Gethorio Davidson",due:"2026-04-10",priority:"High",status:"not-started",milestone:"m4",progress:0,notes:"Ensure April 23 GBM promotes June 5-7 anniversary weekend.",history:[],deps:[]},
-  {id:uid(),title:"Add Anitra Spurlock to Unity Bank account",owner:"Anitra Spurlock",due:"2026-03-31",priority:"Critical",status:"not-started",milestone:"m5",progress:0,notes:"Immediate onboarding required for financial operations.",history:[],deps:[]},
-  {id:uid(),title:"QuickBooks cleanup and setup — financial controls",owner:"Anitra Spurlock",due:"2026-03-31",priority:"Critical",status:"in-progress",milestone:"m5",progress:40,notes:"Complete account review with President. Verify no missing funds.",history:[],deps:[]},
-  {id:uid(),title:"Set up membership payment process in QuickBooks",owner:"Anitra Spurlock",due:"2026-03-31",priority:"Critical",status:"in-progress",milestone:"m5",progress:30,notes:"Coordinate with website admin and Roselynn Ruth.",history:[],deps:[]},
-  {id:uid(),title:"Establish reporting and reconciliation cadence",owner:"Anitra Spurlock",due:"2026-03-31",priority:"High",status:"not-started",milestone:"m5",progress:0,notes:"Draft weekly finance snapshot for board review.",history:[],deps:[]},
-  {id:uid(),title:"Publish volunteer/service highlight on social media",owner:"Deja Evans",due:"2026-03-28",priority:"Medium",status:"not-started",milestone:"m6",progress:0,notes:"Instagram @nfbpagreaterhouston. LinkedIn: nfbpagreaterhouston.",history:[],deps:[]},
-  {id:uid(),title:"Create leadership panel teaser content for June 7",owner:"Rachel Gutierrez",due:"2026-04-01",priority:"Medium",status:"not-started",milestone:"m6",progress:0,notes:"Draft teaser copy + visual request for Sunday panel.",history:[],deps:[]},
-  {id:uid(),title:"Secure Black media feature for 40th Anniversary",owner:"Rachel Gutierrez",due:"2026-04-15",priority:"High",status:"not-started",milestone:"m6",progress:0,notes:"Develop media target list. Coordinate with President.",history:[],deps:[]},
-  {id:uid(),title:"Build scholarship content pipeline for social media",owner:"Deja Evans",due:"2026-04-15",priority:"Medium",status:"not-started",milestone:"m6",progress:0,notes:"Pull 2024 scholar assets and build posting schedule.",history:[],deps:[]},
-  {id:uid(),title:"Update NFBPA Houston website with 2026 board and events",owner:"Rachel Gutierrez",due:"2026-04-01",priority:"High",status:"not-started",milestone:"m6",progress:0,notes:"www.nfbpahoustontx.org — board bios and programming calendar.",history:[],deps:[]},
+  {id:uid(),title:"Secure Dine & Dialogue sponsorship — $2,500 Silver ask",owner:"Cherrelle J. Duncan, MPSA",due:"2026-04-15",priority:"High",status:"not-started",milestone:"m3",progress:0,notes:"Silver tier for July 24 Dine & Dialogue fundraiser.",history:[],deps:[]},
+  {id:uid(),title:"Confirm April 23 GBM venue and logistics",owner:"Gethorio Davidson",due:"2026-04-10",priority:"Critical",status:"not-started",milestone:"m4",progress:0,notes:"GBM topic: Cross-Racial Collaboration.",history:[],deps:[]},
+  {id:uid(),title:"Draft April 23 GBM agenda and send to board for review",owner:"Rachel Gutierrez",due:"2026-04-14",priority:"High",status:"not-started",milestone:"m4",progress:0,notes:"Circulate at least 5 days before meeting.",history:[],deps:[]},
+  {id:uid(),title:"Send April 23 GBM member invitations via Constant Contact",owner:"Deja Evans",due:"2026-04-10",priority:"High",status:"not-started",milestone:"m4",progress:0,notes:"Use Constant Contact email list.",history:[],deps:[]},
+  {id:uid(),title:"Set up QuickBooks and connect Unity Bank account",owner:"Anitra Spurlock",due:"2026-03-31",priority:"Critical",status:"not-started",milestone:"m5",progress:0,notes:"QuickBooks subscription: $1,367.32/yr. Unity Bank primary account.",history:[],deps:[]},
+  {id:uid(),title:"Reconcile 2025 financial records and produce year-end summary",owner:"Anitra Spurlock",due:"2026-04-15",priority:"Critical",status:"not-started",milestone:"m5",progress:0,notes:"Required before 2026 budget execution begins.",history:[],deps:[]},
+  {id:uid(),title:"Set up PO Box and public storage unit",owner:"Anitra Spurlock",due:"2026-04-01",priority:"Medium",status:"not-started",milestone:"m5",progress:0,notes:"PO Box: $442/yr. Storage: $1,650/yr.",history:[],deps:[]},
+  {id:uid(),title:"Renew Constant Contact and update email list",owner:"Deja Evans",due:"2026-03-31",priority:"High",status:"not-started",milestone:"m5",progress:0,notes:"Constant Contact: $2,200/yr. Coordinate with Secretary.",history:[],deps:[]},
+  {id:uid(),title:"Launch social media content calendar for Q2 2026",owner:"Deja Evans",due:"2026-04-01",priority:"High",status:"not-started",milestone:"m6",progress:0,notes:"Instagram, LinkedIn, Facebook. Weekly cadence minimum.",history:[],deps:[]},
+  {id:uid(),title:"Create 40th Anniversary promotional graphics and flyer",owner:"Deja Evans",due:"2026-04-15",priority:"High",status:"not-started",milestone:"m6",progress:0,notes:"Use Canva Pro. Coordinate with Anniversary Chair.",history:[],deps:[]},
+  {id:uid(),title:"Draft April newsletter with membership drive and anniversary content",owner:"Rachel Gutierrez",due:"2026-04-10",priority:"Medium",status:"not-started",milestone:"m6",progress:0,notes:"Send via Constant Contact.",history:[],deps:[]},
+  {id:uid(),title:"Collect 3 member testimonials for recruitment campaign",owner:"Roselynn Ruth",due:"2026-04-07",priority:"Medium",status:"not-started",milestone:"m6",progress:0,notes:"Video or written. For social media and one-pager.",history:[],deps:[]},
+  {id:uid(),title:"Update NFBPA Houston website with 2026 board and events",owner:"Deja Evans",due:"2026-04-01",priority:"High",status:"not-started",milestone:"m6",progress:0,notes:"Update board roster, event calendar, and membership page.",history:[],deps:[]},
 ];
 
+// ── REDUCER ─────────────────────────────────────────────────
+const MAX_UNDO = 50;
 const INIT_PRESENT = { tasks:SEED, milestones:MILESTONES_SEED, recycleBin:[], checkpoints:[], budget:BUDGET_INIT };
 
-// ── REDUCER ──────────────────────────────────────────────────
-function reducer(state, action) {
-  const { past, present, future } = state;
-  const push = np => ({ past:[...past,present].slice(-50), present:np, future:[] });
+function reducer(state,action) {
+  const {past,present,future}=state;
+  function push(newPresent) {
+    const newPast=[...past,present].slice(-MAX_UNDO);
+    return {past:newPast,present:newPresent,future:[]};
+  }
   switch(action.type) {
-    case 'UNDO': return past.length ? { past:past.slice(0,-1), present:past[past.length-1], future:[present,...future].slice(0,50) } : state;
-    case 'REDO': return future.length ? { past:[...past,present].slice(-50), present:future[0], future:future.slice(1) } : state;
-    case 'ADD_TASK':    return push({...present, tasks:[...present.tasks, action.task]});
-    case 'UPDATE_TASK': return push({...present, tasks:present.tasks.map(t=>t.id===action.task.id?{...action.task,history:[...(t.history||[]),{snapshot:t,savedAt:new Date().toISOString()}].slice(-10)}:t)});
-    case 'MOVE_TASK':   return push({...present, tasks:present.tasks.map(t=>t.id===action.id?{...t,status:action.status}:t)});
-    case 'SOFT_DELETE': { const tgt=present.tasks.find(t=>t.id===action.id); return tgt ? push({...present, tasks:present.tasks.filter(t=>t.id!==action.id), recycleBin:[...present.recycleBin,{...tgt,deletedAt:new Date().toISOString()}]}) : state; }
-    case 'RESTORE_TASK':{ const tgt=present.recycleBin.find(t=>t.id===action.id); return tgt ? push({...present, tasks:[...present.tasks,{...tgt,deletedAt:undefined}], recycleBin:present.recycleBin.filter(t=>t.id!==action.id)}) : state; }
-    case 'PURGE_TASK':  return push({...present, recycleBin:present.recycleBin.filter(t=>t.id!==action.id)});
-    case 'EMPTY_BIN':   return push({...present, recycleBin:[]});
-    case 'BULK_COMPLETE':return push({...present, tasks:present.tasks.map(t=>action.ids.includes(t.id)?{...t,status:'complete'}:t)});
-    case 'BULK_REMOVE': return push({...present, tasks:present.tasks.filter(t=>!action.ids.includes(t.id)), recycleBin:[...present.recycleBin,...present.tasks.filter(t=>action.ids.includes(t.id)).map(t=>({...t,deletedAt:new Date().toISOString()}))]});
-    case 'ADD_CHECKPOINT': return {...state, present:{...present, checkpoints:[...present.checkpoints,{id:uid(),savedAt:new Date().toISOString(),snapshot:{...present}}].slice(-5)}};
-    case 'RESTORE_CP':  return push(action.snapshot);
-    case 'UPDATE_BUDGET_YTD': {
-      const newC = present.budget.committees.map(c=>c.code===action.code?{...c,[action.field]:action.value}:c);
-      return push({...present, budget:{...present.budget, committees:newC}});
-    }
+    case 'UNDO': if(!past.length)return state; return {past:past.slice(0,-1),present:past[past.length-1],future:[present,...future]};
+    case 'REDO': if(!future.length)return state; return {past:[...past,present],present:future[0],future:future.slice(1)};
     case 'LOAD': return {past:[],present:{...INIT_PRESENT,...action.state},future:[]};
+    case 'ADD_TASK': return push({...present,tasks:[...present.tasks,{...action.task,history:[{savedAt:new Date().toISOString(),snapshot:{...action.task}}]}]});
+    case 'UPDATE_TASK': {
+      const old=present.tasks.find(t=>t.id===action.task.id);
+      const hist=[...(old?.history||[]),{savedAt:new Date().toISOString(),snapshot:{...old}}].slice(-10);
+      return push({...present,tasks:present.tasks.map(t=>t.id===action.task.id?{...action.task,history:hist}:t)});
+    }
+    case 'MOVE_TASK': return push({...present,tasks:present.tasks.map(t=>t.id===action.id?{...t,status:action.status}:t)});
+    case 'SOFT_DELETE': {
+      const t=present.tasks.find(x=>x.id===action.id);
+      if(!t)return state;
+      return push({...present,tasks:present.tasks.filter(x=>x.id!==action.id),recycleBin:[...present.recycleBin,{...t,deletedAt:new Date().toISOString()}]});
+    }
+    case 'RESTORE_TASK': {
+      const t=present.recycleBin.find(x=>x.id===action.id);
+      if(!t)return state;
+      const {deletedAt,...task}=t;
+      return push({...present,tasks:[...present.tasks,task],recycleBin:present.recycleBin.filter(x=>x.id!==action.id)});
+    }
+    case 'PURGE_TASK': return push({...present,recycleBin:present.recycleBin.filter(x=>x.id!==action.id)});
+    case 'EMPTY_BIN': return push({...present,recycleBin:[]});
+    case 'BULK_COMPLETE': return push({...present,tasks:present.tasks.map(t=>action.ids.includes(t.id)?{...t,status:'complete',progress:100}:t)});
+    case 'BULK_REMOVE': {
+      const removed=present.tasks.filter(t=>action.ids.includes(t.id)).map(t=>({...t,deletedAt:new Date().toISOString()}));
+      return push({...present,tasks:present.tasks.filter(t=>!action.ids.includes(t.id)),recycleBin:[...present.recycleBin,...removed]});
+    }
+    case 'ADD_MILESTONE': return push({...present,milestones:[...present.milestones,{id:uid(),name:S(action.name),color:action.color||'#94a3b8'}]});
+    case 'RENAME_MILESTONE': return push({...present,milestones:present.milestones.map(m=>m.id===action.id?{...m,name:S(action.name)}:m)});
+    case 'DELETE_MILESTONE': return push({...present,milestones:present.milestones.filter(m=>m.id!==action.id),tasks:present.tasks.map(t=>t.milestone===action.id?{...t,milestone:'m7'}:t)});
+    case 'ADD_CHECKPOINT': {
+      const cp={id:uid(),savedAt:nowCDT(),snapshot:{...present}};
+      return {...state,present:{...present,checkpoints:[cp,...present.checkpoints].slice(0,5)}};
+    }
+    case 'RESTORE_CP': return push({...action.snapshot});
+    case 'UPDATE_BUDGET_YTD': return push({...present,budget:{...present.budget,committees:present.budget.committees.map(c=>c.code===action.code?{...c,[action.field]:action.value}:c)}});
     default: return state;
   }
 }
@@ -219,32 +248,162 @@ function reducer(state, action) {
 // ── TOAST ────────────────────────────────────────────────────
 function useToast() {
   const [toasts,setToasts]=useState([]);
-  const show=useCallback((msg,type='ok')=>{const id=uid();setToasts(t=>[...t,{id,msg,type}]);setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),3800);},[]);
+  const show=useCallback((msg,type='success')=>{
+    const id=uid();
+    setToasts(t=>[...t,{id,msg,type}]);
+    setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),3500);
+  },[]);
   return {toasts,show};
 }
 function Toasts({toasts}) {
   return <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
-    {toasts.map(t=><div key={t.id} className={`toast-in px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white max-w-xs leading-snug ${t.type==='err'?'bg-red-600':t.type==='warn'?'bg-amber-500':'bg-[#1E3A5F]'}`}>{t.msg}</div>)}
+    {toasts.map(t=>(
+      <div key={t.id} className={`toast-in px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-xs pointer-events-auto ${t.type==='warn'?'bg-yellow-500 text-white':'bg-[#1E3A5F] text-white'}`}>{t.msg}</div>
+    ))}
   </div>;
 }
 
-// ── SHARED UI ────────────────────────────────────────────────
-function Confirm({msg,onYes,onNo,danger=true}) {
+// ── CONFIRM ──────────────────────────────────────────────────
+function Confirm({msg,onYes,onNo}) {
   return <div className="modal-bg" onClick={onNo}>
-    <div className="modal-card p-6 max-w-sm" onClick={e=>e.stopPropagation()}>
-      <p className="text-sm text-[#1E3A5F] dark:text-gray-100 mb-5 leading-relaxed">{msg}</p>
-      <div className="flex gap-3 justify-end">
-        <button onClick={onNo} className="px-4 py-2 text-sm border border-gray-200 dark:border-[#2D4A6B] rounded-xl hover:bg-gray-50 dark:hover:bg-[#2D4A6B] font-medium transition-colors">Cancel</button>
-        <button onClick={onYes} className={`px-4 py-2 text-sm text-white rounded-xl font-bold transition-colors ${danger?'bg-red-500 hover:bg-red-600':'bg-[#1E3A5F] hover:bg-[#162d4a]'}`}>Confirm</button>
+    <div className="bg-white dark:bg-[#1A2E47] rounded-2xl p-6 max-w-sm w-full shadow-2xl" onClick={e=>e.stopPropagation()}>
+      <p className="text-sm font-semibold text-[#1E3A5F] dark:text-gray-100 mb-5 leading-relaxed">{msg}</p>
+      <div className="flex gap-3">
+        <button onClick={onNo} className="flex-1 py-2.5 border border-gray-200 dark:border-[#2D4A6B] rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors">Cancel</button>
+        <button onClick={onYes} className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition-colors">Confirm</button>
       </div>
     </div>
   </div>;
 }
 
-function Tip({label,children}) {
-  return <div className="tip">{children}<span className="tip-box">{label}</span></div>;
+// ── RECOVERY ─────────────────────────────────────────────────
+function Recovery({checkpoints,onRestore,onClose}) {
+  return <div className="modal-bg" onClick={onClose}>
+    <div className="modal-card" onClick={e=>e.stopPropagation()}>
+      <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 dark:border-[#2D4A6B]">
+        <h2 className="font-bold text-[#1E3A5F] dark:text-gray-100">🔄 Recovery Points</h2>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#2D4A6B]">×</button>
+      </div>
+      <div className="p-6">
+        <p className="text-xs text-gray-400 mb-4">The board auto-saves a recovery point every 5 minutes. Click Restore to roll back to any point below.</p>
+        {checkpoints.length===0 ? (
+          <div className="text-center py-10 text-gray-300">
+            <div className="text-4xl mb-2">🕐</div>
+            <p className="text-sm">No recovery points yet. Check back after 5 minutes of activity.</p>
+          </div>
+        ) : checkpoints.map(cp=>(
+          <div key={cp.id} className="flex items-center justify-between border border-gray-100 dark:border-[#2D4A6B] rounded-xl p-4 mb-2 hover:bg-gray-50 dark:hover:bg-[#2D4A6B]">
+            <div>
+              <p className="text-sm font-semibold text-[#1E3A5F] dark:text-gray-100">{cp.savedAt}</p>
+              <p className="text-xs text-gray-400">{cp.snapshot?.tasks?.length||0} tasks · {cp.snapshot?.milestones?.length||0} milestones</p>
+            </div>
+            <button onClick={()=>onRestore(cp.snapshot)} className="text-xs text-white bg-[#1E3A5F] px-3 py-1.5 rounded-lg hover:bg-[#162d4a] font-bold transition-colors">Restore</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>;
 }
 
+// ── BOARD INFO ───────────────────────────────────────────────
+function BoardInfo({onClose}) {
+  const [tab,setTab]=useState('board');
+  const tabs=[['board','🏛 Board'],['sponsors','💼 Sponsors'],['program','📅 Calendar'],['kb','💡 Help']];
+  return <div className="modal-bg" onClick={onClose}>
+    <div className="modal-card max-w-2xl" onClick={e=>e.stopPropagation()}>
+      <div className="flex items-center justify-between px-6 pt-5 pb-0 border-b border-gray-100 dark:border-[#2D4A6B]">
+        <div className="flex gap-1">
+          {tabs.map(([id,label])=>(
+            <button key={id} onClick={()=>setTab(id)}
+              className={`px-4 py-3 text-xs font-semibold border-b-2 transition-colors ${tab===id?'border-[#C8A951] text-[#1E3A5F] dark:text-gray-100':'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#2D4A6B] mb-2">×</button>
+      </div>
+      <div className="p-6 overflow-y-auto max-h-[70vh]">
+        {tab==='board' && <>
+          <div className="mb-5 p-4 bg-[#1E3A5F] rounded-xl text-white">
+            <p className="text-xs font-bold text-[#C8A951] mb-1 tracking-wide">40TH ANNIVERSARY WEEKEND</p>
+            <p className="font-bold text-2xl">June 5–7, 2026</p>
+            <div className="text-sm mt-2 space-y-1 text-blue-100">
+              <p>Friday June 5 — Welcome Social at Fancy's</p>
+              <p>Saturday June 6 — Public Administration Day + Find Your Vibe Night</p>
+              <p>Sunday June 7 — Leadership Panel + Anniversary Luncheon (10 Awards)</p>
+            </div>
+          </div>
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-gray-100 dark:border-[#2D4A6B]">
+              <th className="text-left py-2 text-xs font-bold text-gray-400 uppercase">Role</th>
+              <th className="text-left py-2 text-xs font-bold text-gray-400 uppercase">Name</th>
+            </tr></thead>
+            <tbody>{BOARD_ROSTER.map(m=>(
+              <tr key={m.role} className="border-b border-gray-50 dark:border-[#2D4A6B] hover:bg-gray-50 dark:hover:bg-[#2D4A6B]">
+                <td className="py-2.5 text-gray-500 text-xs pr-4">{m.role}</td>
+                <td className="py-2.5 font-semibold text-[#1E3A5F] dark:text-gray-100">{m.name}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </>}
+        {tab==='sponsors' && <>
+          <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl text-sm text-amber-800 dark:text-amber-200">
+            <strong>2026 Total Revenue Target: $97,295</strong> — Contact: president@nfbpahoustontx.org
+          </div>
+          <div className="space-y-3">
+            {SPONSOR_TIERS.map(s=>(
+              <div key={s.tier} className="border border-gray-100 dark:border-[#2D4A6B] rounded-xl p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-[#1E3A5F] dark:text-gray-100">{s.tier}</span>
+                  <span className="font-bold text-[#C8A951] text-lg">{s.label}</span>
+                </div>
+                <p className="text-xs text-gray-500">{s.benefits}</p>
+              </div>
+            ))}
+          </div>
+        </>}
+        {tab==='program' && (
+          <div className="space-y-2">
+            {PROGRAMMING.map((ev,i)=>(
+              <div key={i} className="flex gap-3 items-start border-b border-gray-50 dark:border-[#2D4A6B] pb-2.5">
+                <div className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5 font-medium">{ev.date}</div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-[#1E3A5F] dark:text-gray-100">{ev.event}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLOR[ev.type]||'bg-gray-100 text-gray-600'}`}>{ev.type}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {tab==='kb' && (
+          <div className="space-y-3">
+            {[
+              ['Drag and drop a task','Grab any card and drag it to a different column to update its status. You can also use the dropdown at the bottom of each card.'],
+              ['Edit a task','Click anywhere on a task card (except the checkbox or Remove button) to open the edit form.'],
+              ['Undo any action','Press Ctrl+Z on your keyboard, or click the gold Undo button in the header. Up to 50 actions can be undone.'],
+              ['Redo an undone action','Press Ctrl+Y, or click the Redo button next to Undo in the header.'],
+              ['Select multiple tasks','Check the box on each card. A bulk action bar will appear — mark complete or remove all at once.'],
+              ['Share this board','Click the Share button in the header. The link captures the exact current board state — anyone with the link sees the same board.'],
+              ['Recover a deleted task','Click the Bin button in the header. Removed tasks are kept for 30 days before being permanently purged.'],
+              ['Roll back to an earlier state','Click Recover in the header to restore an auto-saved recovery point (saved every 5 minutes).'],
+              ['Add a new task','Click the + Add Task button in the header, or press the N key on your keyboard.'],
+              ['Search and filter','Use the search bar and dropdowns above the board. The task count shows how many match your current filters.'],
+              ['Update budget figures','Go to the Budget & Finance tab, expand any committee row, and click Update YTD to enter actual income or expense figures.'],
+              ['Print a report','Press Ctrl+P in your browser. The board prints in light mode, grouped by milestone.'],
+            ].map(([q,a])=>(
+              <div key={q} className="border border-gray-100 dark:border-[#2D4A6B] rounded-xl p-4">
+                <p className="text-sm font-bold text-[#1E3A5F] dark:text-gray-100 mb-1">How do I: {q}?</p>
+                <p className="text-xs text-gray-500 leading-relaxed">{a}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>;
+}
+
+// ── PROGRESS BAR ─────────────────────────────────────────────
 function ProgressBar({value,color='#1E3A5F'}) {
   return <div className="w-full bg-gray-100 dark:bg-[#2D4A6B] rounded-full h-1.5 overflow-hidden">
     <div className="h-1.5 rounded-full bar" style={{width:Math.min(100,Math.max(0,value))+'%',background:color}}></div>
@@ -262,13 +421,13 @@ function TaskBadge({task}) {
 }
 
 // ── TASK CARD ────────────────────────────────────────────────
-function TaskCard({task,milestones,onEdit,onRemove,onMove,selected,onSelect,onDragStart,onDragEnd}) {
+function TaskCard({task,milestones,onEdit,onRemove,onMove,selected,onSelect}) {
   const ms = milestones.find(m=>m.id===task.milestone);
   return <div
     draggable
-    onDragStart={e=>{ e.dataTransfer.setData('text/plain',task.id); e.dataTransfer.effectAllowed='move'; onDragStart&&onDragStart(task.id); e.currentTarget.classList.add('dragging'); }}
-    onDragEnd={e=>{ e.currentTarget.classList.remove('dragging'); onDragEnd&&onDragEnd(); }}
-    className="bg-white dark:bg-[#1A2E47] border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-xl p-3 mb-2 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow select-none"
+    onDragStart={e=>{ e.dataTransfer.setData('text/plain',task.id); e.dataTransfer.effectAllowed='move'; e.currentTarget.classList.add('dragging'); }}
+    onDragEnd={e=>{ e.currentTarget.classList.remove('dragging'); }}
+    className="bg-white dark:bg-[#1A2E47] border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-xl p-3 mb-2 shadow-sm cursor-grab active:cursor-grabbing card-hover select-none"
   >
     <div className="flex items-start gap-2 mb-2">
       <input type="checkbox" checked={selected} onChange={e=>onSelect(task.id,e.target.checked)}
@@ -285,7 +444,7 @@ function TaskCard({task,milestones,onEdit,onRemove,onMove,selected,onSelect,onDr
     </div>
     {task.progress > 0 && <div className="mb-2"><ProgressBar value={task.progress}/></div>}
     <div className="flex items-center justify-between text-xs text-gray-400">
-      <span>{task.owner ? task.owner.split(' ')[0] : '—'}</span>
+      <span className="font-medium">{task.owner ? task.owner.split(' ')[0] : '—'}</span>
       <span>{task.due ? fmtDate(task.due) : '—'}</span>
     </div>
     <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50 dark:border-[#2D4A6B]">
@@ -307,13 +466,13 @@ function TaskModal({task,milestones,onSave,onClose}) {
   return <div className="modal-bg" onClick={onClose}>
     <div className="modal-card" onClick={e=>e.stopPropagation()}>
       <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 dark:border-[#2D4A6B]">
-        <h2 className="font-bold text-[#1E3A5F] dark:text-gray-100">{task?'Edit Deliverable':'New Deliverable'}</h2>
+        <h2 className="font-bold text-[#1E3A5F] dark:text-gray-100 text-lg">{task?'Edit Deliverable':'New Deliverable'}</h2>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#2D4A6B]">×</button>
       </div>
       <form onSubmit={submit} className="p-6 space-y-4">
         <div>
           <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Title *</label>
-          <input required className="w-full border border-[#E2E8F0] dark:border-[#2D4A6B] dark:bg-[#0F1F33] dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+          <input required autoFocus className="w-full border border-[#E2E8F0] dark:border-[#2D4A6B] dark:bg-[#0F1F33] dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
             value={form.title} onChange={e=>set('title',e.target.value)} placeholder="What needs to be done?"/>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -367,7 +526,7 @@ function TaskModal({task,milestones,onSave,onClose}) {
         {task && task.history && task.history.length > 0 && (
           <div>
             <button type="button" onClick={()=>setShowHistory(h=>!h)} className="text-xs text-[#1E3A5F] dark:text-blue-300 hover:underline font-medium">
-              {showHistory?'Hide':'Show'} version history ({task.history.length} versions)
+              {showHistory?'Hide':'Show'} version history ({task.history.length} saved versions)
             </button>
             {showHistory && <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
               {[...task.history].reverse().map((h,i)=>(
@@ -417,320 +576,111 @@ function RecycleBin({bin,onRestore,onPurge,onEmpty,onClose}) {
                   <p className="text-xs text-gray-400">Removed {t.deletedAt ? fmtDate(t.deletedAt.slice(0,10)) : ''} · {t.owner||'No owner'}</p>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                  <button onClick={()=>onRestore(t.id)} className="text-xs text-[#1E3A5F] dark:text-blue-300 border border-[#1E3A5F] dark:border-blue-300 px-3 py-1.5 rounded-lg hover:bg-[#1E3A5F] hover:text-white transition-colors font-medium">Restore</button>
-                  <button onClick={()=>setConf({type:'purge',id:t.id,title:t.title})} className="text-xs text-red-400 hover:text-red-600 px-2 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">×</button>
+                  <button onClick={()=>onRestore(t.id)} className="text-xs text-[#1E3A5F] dark:text-blue-300 border border-[#1E3A5F] dark:border-blue-300 px-3 py-1.5 rounded-lg hover:bg-[#1E3A5F] hover:text-white transition-colors font-bold">Restore</button>
+                  <button onClick={()=>setConf({type:'purge',id:t.id})} className="text-xs text-red-400 hover:text-red-600 px-2 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">Remove Permanently</button>
                 </div>
               </div>
             ))}
           </div>
         )}
+        {conf && <Confirm
+          msg={conf.type==='empty'?'Permanently remove all items from the Recycle Bin? This cannot be undone.':'Remove this task permanently? This cannot be undone.'}
+          onYes={()=>{if(conf.type==='empty')onEmpty();else onPurge(conf.id);setConf(null);}}
+          onNo={()=>setConf(null)}/>}
       </div>
-      {conf && <Confirm
-        msg={conf.type==='empty'?'Permanently remove all items from the Recycle Bin? This cannot be undone.':`Remove "${conf.title}" permanently? This cannot be undone.`}
-        onYes={()=>{if(conf.type==='empty')onEmpty();else onPurge(conf.id);setConf(null);}}
-        onNo={()=>setConf(null)}/>}
     </div>
   </div>;
 }
 
-// ── RECOVERY ─────────────────────────────────────────────────
-function Recovery({checkpoints,onRestore,onClose}) {
-  const [conf,setConf]=useState(null);
-  return <div className="modal-bg" onClick={onClose}>
-    <div className="modal-card" onClick={e=>e.stopPropagation()}>
-      <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 dark:border-[#2D4A6B]">
-        <h2 className="font-bold text-[#1E3A5F] dark:text-gray-100">⏱ Recovery Points</h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#2D4A6B]">×</button>
-      </div>
-      <div className="p-6">
-        <p className="text-xs text-gray-400 mb-4">The board auto-saves a recovery point every 5 minutes. Click Restore to roll back to any saved state.</p>
-        {checkpoints.length===0 ? (
-          <div className="text-center py-12 text-gray-300">
-            <div className="text-5xl mb-3">⏳</div>
-            <p className="text-sm font-medium">No recovery points yet.</p>
-            <p className="text-xs mt-1">The first one will be created in 5 minutes.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {[...checkpoints].reverse().map((cp,i)=>(
-              <div key={cp.id} className="flex items-center justify-between border border-gray-100 dark:border-[#2D4A6B] rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-[#2D4A6B]">
-                <div>
-                  <p className="text-sm font-semibold text-[#1E3A5F] dark:text-gray-100">Recovery Point {checkpoints.length-i}</p>
-                  <p className="text-xs text-gray-400">{fmtDate(cp.savedAt?.slice(0,10))} · {cp.snapshot?.tasks?.length||0} tasks saved</p>
-                </div>
-                <button onClick={()=>setConf(cp)} className="text-xs text-[#1E3A5F] dark:text-blue-300 border border-[#1E3A5F] dark:border-blue-300 px-3 py-1.5 rounded-lg hover:bg-[#1E3A5F] hover:text-white transition-colors font-medium">Restore</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      {conf && <Confirm msg="Roll back to this recovery point? Your current board will be overwritten. You can undo this with Ctrl+Z." danger={false}
-        onYes={()=>{onRestore(conf.snapshot);setConf(null);onClose();}} onNo={()=>setConf(null)}/>}
-    </div>
-  </div>;
-}
-
-// ── BOARD INFO ───────────────────────────────────────────────
-function BoardInfo({onClose}) {
-  const [tab,setTab]=useState('board');
+// ── OWNER WORKLOAD VIEW ──────────────────────────────────────
+function WorkloadView({tasks,milestones,onClose}) {
+  const owners = [...new Set(tasks.map(t=>t.owner).filter(Boolean))].sort();
   return <div className="modal-bg" onClick={onClose}>
     <div className="modal-card max-w-2xl" onClick={e=>e.stopPropagation()}>
       <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 dark:border-[#2D4A6B]">
-        <h2 className="font-bold text-[#1E3A5F] dark:text-gray-100 text-base">NFBPA Greater Houston — 2026 Reference</h2>
+        <h2 className="font-bold text-[#1E3A5F] dark:text-gray-100">👤 Owner Workload</h2>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#2D4A6B]">×</button>
       </div>
-      <div className="flex border-b border-gray-100 dark:border-[#2D4A6B] px-6 overflow-x-auto">
-        {[['board','Board'],['sponsors','Sponsors'],['program','Calendar'],['kb','Help']].map(([id,label])=>(
-          <button key={id} onClick={()=>setTab(id)} className={`py-2.5 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${tab===id?'border-[#C8A951] text-[#1E3A5F] dark:text-gray-100':'border-transparent text-gray-400 hover:text-gray-600'}`}>{label}</button>
-        ))}
-      </div>
-      <div className="p-6 max-h-[60vh] overflow-y-auto">
-        {tab==='board' && <>
-          <div className="mb-5 p-4 bg-[#1E3A5F] rounded-xl text-white">
-            <p className="text-xs font-bold text-[#C8A951] mb-1 tracking-wide">40TH ANNIVERSARY WEEKEND</p>
-            <p className="font-bold text-2xl">June 5-7, 2026</p>
-            <div className="text-sm mt-2 space-y-1 text-blue-100">
-              <p>Friday June 5 — Welcome Social at Fancy's</p>
-              <p>Saturday June 6 — Public Administration Day + Find Your Vibe Night</p>
-              <p>Sunday June 7 — Leadership Panel + Anniversary Luncheon (10 Awards)</p>
+      <div className="p-6 overflow-y-auto max-h-[70vh]">
+        <p className="text-xs text-gray-400 mb-4">Task distribution across board members. Click any row to see their tasks.</p>
+        {owners.length===0 ? <p className="text-sm text-gray-400 text-center py-8">No tasks with owners yet.</p> : owners.map(owner=>{
+          const ownerTasks = tasks.filter(t=>t.owner===owner);
+          const done = ownerTasks.filter(t=>t.status==='complete').length;
+          const overdue = ownerTasks.filter(t=>t.status!=='complete'&&t.due&&daysUntil(t.due)<0).length;
+          const critical = ownerTasks.filter(t=>t.priority==='Critical'&&t.status!=='complete').length;
+          const pct = ownerTasks.length ? Math.round(done/ownerTasks.length*100) : 0;
+          return <div key={owner} className="border border-gray-100 dark:border-[#2D4A6B] rounded-xl p-4 mb-3 hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-sm font-bold text-[#1E3A5F] dark:text-gray-100">{owner}</p>
+                <p className="text-xs text-gray-400">{ownerTasks.length} task{ownerTasks.length!==1?'s':''} · {done} complete · {pct}%</p>
+              </div>
+              <div className="flex gap-2 text-xs">
+                {overdue>0 && <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">{overdue} overdue</span>}
+                {critical>0 && <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">{critical} critical</span>}
+              </div>
             </div>
-          </div>
-          <table className="w-full text-sm">
-            <thead><tr className="border-b border-gray-100 dark:border-[#2D4A6B]">
-              <th className="text-left py-2 text-xs font-bold text-gray-400 uppercase">Role</th>
-              <th className="text-left py-2 text-xs font-bold text-gray-400 uppercase">Name</th>
-            </tr></thead>
-            <tbody>{BOARD_ROSTER.map(m=>(
-              <tr key={m.role} className="border-b border-gray-50 dark:border-[#2D4A6B] hover:bg-gray-50 dark:hover:bg-[#2D4A6B]">
-                <td className="py-2.5 text-gray-500 text-xs pr-4">{m.role}</td>
-                <td className="py-2.5 font-semibold text-[#1E3A5F] dark:text-gray-100">{m.name}</td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </>}
-        {tab==='sponsors' && <>
-          <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl text-sm text-amber-800 dark:text-amber-200">
-            <strong>2026 Total Revenue Target: $97,295</strong> — Contact: president@nfbpahoustontx.org
-          </div>
-          <div className="space-y-3">
-            {SPONSOR_TIERS.map(s=>(
-              <div key={s.tier} className="border border-gray-100 dark:border-[#2D4A6B] rounded-xl p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-[#1E3A5F] dark:text-gray-100">{s.tier}</span>
-                  <span className="font-bold text-[#C8A951] text-lg">{s.label}</span>
-                </div>
-                <p className="text-xs text-gray-500">{s.benefits}</p>
-              </div>
-            ))}
-          </div>
-        </>}
-        {tab==='program' && (
-          <div className="space-y-2">
-            {PROGRAMMING.map((ev,i)=>(
-              <div key={i} className="flex gap-3 items-start border-b border-gray-50 dark:border-[#2D4A6B] pb-2.5">
-                <div className="text-xs text-gray-400 w-28 flex-shrink-0 pt-0.5 font-medium">{ev.date}</div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-[#1E3A5F] dark:text-gray-100">{ev.event}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLOR[ev.type]||'bg-gray-100 text-gray-600'}`}>{ev.type}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {tab==='kb' && (
-          <div className="space-y-3">
-            {[
-              ['Drag and drop a task','Grab any card and drag it to a different column to update its status.'],
-              ['Edit a task','Click anywhere on a task card to open the edit form.'],
-              ['Move a task without dragging','Use the dropdown at the bottom of each card to change the status.'],
-              ['Undo any action','Press Ctrl+Z on your keyboard, or click the Undo button in the header.'],
-              ['Select multiple tasks','Check the box on each card, then use the bulk action bar that appears.'],
-              ['Share this board','Click the Share button in the header. The link captures the exact current state.'],
-              ['Recover a deleted task','Click the Bin button in the header. Tasks are kept for 30 days.'],
-              ['Roll back to an earlier state','Click Recover in the header to restore an auto-saved recovery point.'],
-              ['Add a new task','Click the + Add Task button in the header, or press N on your keyboard.'],
-              ['Search and filter','Use the search bar and dropdowns above the board to narrow down tasks.'],
-            ].map(([q,a])=>(
-              <div key={q} className="border border-gray-100 dark:border-[#2D4A6B] rounded-xl p-4">
-                <p className="text-sm font-bold text-[#1E3A5F] dark:text-gray-100 mb-1">How do I: {q}?</p>
-                <p className="text-xs text-gray-500 leading-relaxed">{a}</p>
-              </div>
-            ))}
-          </div>
-        )}
+            <ProgressBar value={pct} color="#1E3A5F"/>
+            <div className="mt-2 flex gap-1 flex-wrap">
+              {COLS.map(col=>{
+                const n=ownerTasks.filter(t=>t.status===col.id).length;
+                if(!n)return null;
+                return <span key={col.id} className="text-xs px-2 py-0.5 rounded-full font-medium text-white" style={{background:col.color}}>{col.label}: {n}</span>;
+              })}
+            </div>
+          </div>;
+        })}
       </div>
     </div>
   </div>;
 }
 
-// ── BUDGET TAB ───────────────────────────────────────────────
-function BudgetTab({budget,dispatch,toast}) {
-  const [open,setOpen]=useState(null);
-  const [editYTD,setEditYTD]=useState(null);
-  const [ytdVal,setYtdVal]=useState('');
-  const bs = budget;
-  const totalExp = bs.committees.reduce((s,c)=>s+c.exp2026,0);
-  const totalInc = bs.committees.reduce((s,c)=>s+c.inc2026,0);
-  const totalYTDExp = bs.committees.reduce((s,c)=>s+(c.ytdExp||0),0);
-  const totalYTDInc = bs.committees.reduce((s,c)=>s+(c.ytdInc||0),0);
-  const netProjected = totalInc - totalExp;
-  const projYearEnd = bs.startingBalance + netProjected;
-
-  function startEdit(code,field,current) { setEditYTD({code,field}); setYtdVal(String(current||0)); }
-  function saveYTD() {
-    if(!editYTD) return;
-    const n = parseFloat(ytdVal);
-    if(isNaN(n)||n<0) return;
-    dispatch({type:'UPDATE_BUDGET_YTD',code:editYTD.code,field:editYTD.field,value:n});
-    toast('YTD figure updated.');
-    setEditYTD(null);
-  }
-
-  return <div className="px-4 pb-10">
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-      {[
-        {label:'Starting Balance',value:fmt$(bs.startingBalance),sub:'Unity Bank · 2026',color:'text-[#1E3A5F] dark:text-gray-100'},
-        {label:'2026 Income Budget',value:fmt$(totalInc),sub:`${totalInc>0?Math.round(totalYTDInc/totalInc*100):0}% collected YTD`,color:'text-green-600',bar:totalInc>0?Math.round(totalYTDInc/totalInc*100):0,barColor:'#22c55e'},
-        {label:'2026 Expense Budget',value:fmt$(totalExp),sub:`${totalExp>0?Math.round(totalYTDExp/totalExp*100):0}% spent YTD`,color:'text-red-500',bar:totalExp>0?Math.round(totalYTDExp/totalExp*100):0,barColor:'#ef4444'},
-        {label:'Projected Net',value:fmt$(netProjected),sub:`Year-end balance: ${fmt$(projYearEnd)}`,color:netProjected>=0?'text-[#C8A951]':'text-red-500'},
-      ].map(k=>(
-        <div key={k.label} className="bg-white dark:bg-[#1A2E47] rounded-xl border border-[#E2E8F0] dark:border-[#2D4A6B] p-4 shadow-sm">
-          <div className="text-xs text-gray-400 mb-1">{k.label}</div>
-          <div className={`text-xl font-bold ${k.color}`}>{k.value}</div>
-          {k.bar !== undefined && <div className="mt-2"><ProgressBar value={k.bar} color={k.barColor}/></div>}
-          <div className="text-xs text-gray-400 mt-1">{k.sub}</div>
+// ── SPONSORSHIP TRACKER ──────────────────────────────────────
+function SponsorTracker({tasks,onClose}) {
+  const sponsorTasks = tasks.filter(t=>t.milestone==='m3');
+  const totalTarget = 97295;
+  const secured = sponsorTasks.filter(t=>t.status==='complete').reduce((s,t)=>{
+    const m = t.title.match(/\$([0-9,]+)/);
+    return s + (m ? parseInt(m[1].replace(/,/g,'')) : 0);
+  },0);
+  const pct = Math.round(secured/totalTarget*100);
+  return <div className="modal-bg" onClick={onClose}>
+    <div className="modal-card max-w-xl" onClick={e=>e.stopPropagation()}>
+      <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 dark:border-[#2D4A6B]">
+        <h2 className="font-bold text-[#1E3A5F] dark:text-gray-100">💼 Sponsorship Tracker</h2>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#2D4A6B]">×</button>
+      </div>
+      <div className="p-6">
+        <div className="bg-[#1E3A5F] text-white rounded-xl p-4 mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-bold">2026 Revenue Target</span>
+            <span className="text-[#C8A951] font-bold text-xl">{fmt$(totalTarget)}</span>
+          </div>
+          <ProgressBar value={pct} color="#C8A951"/>
+          <div className="flex justify-between text-xs text-blue-200 mt-1">
+            <span>{fmt$(secured)} secured</span>
+            <span>{pct}% of goal</span>
+          </div>
         </div>
-      ))}
-    </div>
-
-    <div className="mb-3 px-1 flex items-center gap-2 text-xs text-gray-400">
-      <span>Click any committee row to expand line items. Click Update YTD to enter actual figures.</span>
-    </div>
-
-    <div className="bg-white dark:bg-[#1A2E47] rounded-xl border border-[#E2E8F0] dark:border-[#2D4A6B] shadow-sm mb-4 overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-100 dark:border-[#2D4A6B]">
-        <h3 className="font-bold text-[#1E3A5F] dark:text-gray-100 text-sm">2026 Budget by Committee</h3>
-      </div>
-      {bs.committees.map(c=>{
-        const maxExp = Math.max(...bs.committees.map(x=>x.exp2026));
-        const barW = maxExp>0?Math.round((c.exp2026/maxExp)*100):0;
-        const ytdExpPct = c.exp2026>0?Math.round(((c.ytdExp||0)/c.exp2026)*100):0;
-        const ytdIncPct = c.inc2026>0?Math.round(((c.ytdInc||0)/c.inc2026)*100):0;
-        const isOpen = open===c.code;
-        const color = COMMITTEE_COLORS[c.code]||'#94a3b8';
-        return <div key={c.code} className="border-b border-gray-50 dark:border-[#2D4A6B] last:border-0">
-          <button className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors text-left"
-            onClick={()=>setOpen(isOpen?null:c.code)}>
-            <span className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{background:color}}>{c.code}</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-semibold text-[#1E3A5F] dark:text-gray-100">{c.name}</span>
-                <div className="flex gap-4 text-xs flex-shrink-0 ml-2">
-                  <span className="text-red-500 font-medium">Exp: {fmt$(c.exp2026)}</span>
-                  {c.inc2026>0 && <span className="text-green-600 font-medium">Inc: {fmt$(c.inc2026)}</span>}
-                </div>
+        <div className="space-y-2">
+          {sponsorTasks.map(t=>{
+            const m=t.title.match(/\$([0-9,]+)/);
+            const amt=m?parseInt(m[1].replace(/,/g,'')): 0;
+            return <div key={t.id} className="flex items-center justify-between border border-gray-100 dark:border-[#2D4A6B] rounded-xl p-3">
+              <div className="flex-1 min-w-0 mr-3">
+                <p className="text-sm font-semibold text-[#1E3A5F] dark:text-gray-100 line-clamp-1">{t.title}</p>
+                <p className="text-xs text-gray-400">{t.owner?.split(' ')[0]} · {t.due?fmtDate(t.due):'No due date'}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-gray-100 dark:bg-[#2D4A6B] rounded-full h-1.5 overflow-hidden">
-                  <div className="h-1.5 rounded-full" style={{width:barW+'%',background:color}}></div>
-                </div>
-                {ytdExpPct>0 && <span className="text-xs text-gray-400 flex-shrink-0">{ytdExpPct}% spent</span>}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {amt>0 && <span className="text-xs font-bold text-[#C8A951]">{fmt$(amt)}</span>}
+                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${t.status==='complete'?'bg-green-100 text-green-700':t.status==='in-progress'?'bg-blue-100 text-blue-700':'bg-gray-100 text-gray-500'}`}>
+                  {COLS.find(c=>c.id===t.status)?.label||t.status}
+                </span>
               </div>
-            </div>
-            <span className="text-gray-400 text-xs ml-2">{isOpen?'▲':'▼'}</span>
-          </button>
-          {isOpen && <div className="px-5 pb-4 bg-gray-50 dark:bg-[#0F1F33]">
-            <div className="grid grid-cols-2 gap-4 pt-3">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Expenses</p>
-                  {editYTD&&editYTD.code===c.code&&editYTD.field==='ytdExp' ? (
-                    <div className="flex items-center gap-1">
-                      <input type="number" className="w-20 text-xs border rounded px-1 py-0.5 dark:bg-[#1A2E47] dark:border-[#2D4A6B] dark:text-gray-100" value={ytdVal} onChange={e=>setYtdVal(e.target.value)} autoFocus onKeyDown={e=>{if(e.key==='Enter')saveYTD();if(e.key==='Escape')setEditYTD(null);}}/>
-                      <button onClick={saveYTD} className="text-xs text-white bg-[#1E3A5F] px-2 py-0.5 rounded font-bold">Save</button>
-                    </div>
-                  ) : (
-                    <button onClick={()=>startEdit(c.code,'ytdExp',c.ytdExp)} className="text-xs text-[#1E3A5F] dark:text-blue-300 hover:underline font-medium">Update YTD</button>
-                  )}
-                </div>
-                {c.expItems.map(item=>(
-                  <div key={item.n} className="flex justify-between text-xs py-1 border-b border-gray-100 dark:border-[#2D4A6B]">
-                    <span className="text-gray-600 dark:text-gray-300 flex-1 mr-2">{item.n}</span>
-                    <span className="font-medium text-[#1E3A5F] dark:text-gray-100 flex-shrink-0">{fmt$(item.p)}</span>
-                  </div>
-                ))}
-                <div className="flex justify-between text-xs pt-2 font-bold">
-                  <span className="text-gray-500">YTD Spent</span>
-                  <span className="text-red-500">{fmt$(c.ytdExp||0)}</span>
-                </div>
-              </div>
-              {c.incItems.length>0 && <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Income</p>
-                  {editYTD&&editYTD.code===c.code&&editYTD.field==='ytdInc' ? (
-                    <div className="flex items-center gap-1">
-                      <input type="number" className="w-20 text-xs border rounded px-1 py-0.5 dark:bg-[#1A2E47] dark:border-[#2D4A6B] dark:text-gray-100" value={ytdVal} onChange={e=>setYtdVal(e.target.value)} autoFocus onKeyDown={e=>{if(e.key==='Enter')saveYTD();if(e.key==='Escape')setEditYTD(null);}}/>
-                      <button onClick={saveYTD} className="text-xs text-white bg-[#1E3A5F] px-2 py-0.5 rounded font-bold">Save</button>
-                    </div>
-                  ) : (
-                    <button onClick={()=>startEdit(c.code,'ytdInc',c.ytdInc)} className="text-xs text-[#1E3A5F] dark:text-blue-300 hover:underline font-medium">Update YTD</button>
-                  )}
-                </div>
-                {c.incItems.map(item=>(
-                  <div key={item.n} className="flex justify-between text-xs py-1 border-b border-gray-100 dark:border-[#2D4A6B]">
-                    <span className="text-gray-600 dark:text-gray-300 flex-1 mr-2">{item.n}</span>
-                    <span className="font-medium text-green-600 flex-shrink-0">{fmt$(item.p)}</span>
-                  </div>
-                ))}
-                <div className="flex justify-between text-xs pt-2 font-bold">
-                  <span className="text-gray-500">YTD Collected</span>
-                  <span className="text-green-600">{fmt$(c.ytdInc||0)}</span>
-                </div>
-              </div>}
-            </div>
-          </div>}
-        </div>;
-      })}
-    </div>
-
-    <div className="bg-white dark:bg-[#1A2E47] rounded-xl border border-[#E2E8F0] dark:border-[#2D4A6B] shadow-sm mb-4 overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-100 dark:border-[#2D4A6B]">
-        <h3 className="font-bold text-[#1E3A5F] dark:text-gray-100 text-sm">2025 Actual vs. 2026 Proposed</h3>
+            </div>;
+          })}
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead><tr className="border-b border-gray-100 dark:border-[#2D4A6B] bg-gray-50 dark:bg-[#0F1F33]">
-            <th className="text-left py-2 px-4 font-bold text-gray-500 uppercase">Committee</th>
-            <th className="text-right py-2 px-3 font-bold text-gray-500 uppercase">2025 Exp</th>
-            <th className="text-right py-2 px-3 font-bold text-gray-500 uppercase">2026 Exp</th>
-            <th className="text-right py-2 px-3 font-bold text-gray-500 uppercase">2025 Inc</th>
-            <th className="text-right py-2 px-3 font-bold text-gray-500 uppercase">2026 Inc</th>
-          </tr></thead>
-          <tbody>
-            {bs.committees.map(c=>(
-              <tr key={c.code} className="border-b border-gray-50 dark:border-[#2D4A6B] hover:bg-gray-50 dark:hover:bg-[#2D4A6B]">
-                <td className="py-2 px-4 font-medium text-[#1E3A5F] dark:text-gray-100">{c.name}</td>
-                <td className="py-2 px-3 text-right text-gray-500">{fmt$(c.exp2025)}</td>
-                <td className="py-2 px-3 text-right font-bold text-red-500">{fmt$(c.exp2026)}</td>
-                <td className="py-2 px-3 text-right text-gray-500">{fmt$(c.inc2025)}</td>
-                <td className="py-2 px-3 text-right font-bold text-green-600">{fmt$(c.inc2026)}</td>
-              </tr>
-            ))}
-            <tr className="bg-[#1E3A5F] text-white">
-              <td className="py-2.5 px-4 font-bold">TOTAL</td>
-              <td className="py-2.5 px-3 text-right font-bold">{fmt$(bs.committees.reduce((s,c)=>s+c.exp2025,0))}</td>
-              <td className="py-2.5 px-3 text-right font-bold">{fmt$(totalExp)}</td>
-              <td className="py-2.5 px-3 text-right font-bold">{fmt$(bs.committees.reduce((s,c)=>s+c.inc2025,0))}</td>
-              <td className="py-2.5 px-3 text-right font-bold text-[#C8A951]">{fmt$(totalInc)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4 text-xs text-amber-800 dark:text-amber-200">
-      <p className="font-bold mb-1">Budget Risk — Program Committee</p>
-      <p>The Program committee includes a <strong>$40,000 line item</strong> for the Black Resident Poll. This is contingent on securing the Government Partners sponsorship ($36,000 target). If not confirmed, the effective Program expense budget is <strong>$16,300</strong>.</p>
     </div>
   </div>;
 }
@@ -762,7 +712,7 @@ function WelcomeBanner({onClose}) {
     <div className="modal-card max-w-lg" onClick={e=>e.stopPropagation()}>
       <div className="p-6">
         <div className="text-center mb-5">
-          <div className="text-4xl mb-2">🏛</div>
+          {LOGO ? <img src={LOGO} alt="NFBPA Greater Houston" className="h-14 w-auto mx-auto mb-3"/> : <div className="text-4xl mb-2">🏛</div>}
           <h2 className="font-bold text-[#1E3A5F] text-xl">Welcome to the NFBPA Houston Program Dashboard</h2>
           <p className="text-sm text-gray-400 mt-1">Your 2026 board execution hub — all tasks, milestones, and budget in one place.</p>
         </div>
@@ -773,7 +723,7 @@ function WelcomeBanner({onClose}) {
             ['↩','Undo Anything','Ctrl+Z undoes any action — nothing is permanent'],
             ['🗑','Recycle Bin','Removed tasks are saved for 30 days'],
             ['🔗','Share Board','Copy a link that captures the exact board state'],
-            ['🏛','Info Panel','Board roster, sponsors, calendar, and help'],
+            ['👤','Owner Workload','See task distribution across all board members'],
           ].map(([icon,title,desc])=>(
             <div key={title} className="border border-gray-100 rounded-xl p-3">
               <div className="text-xl mb-1">{icon}</div>
@@ -782,7 +732,183 @@ function WelcomeBanner({onClose}) {
             </div>
           ))}
         </div>
-        <button onClick={onClose} className="w-full py-3 bg-[#1E3A5F] text-white rounded-xl font-bold hover:bg-[#162d4a] transition-colors">Get Started</button>
+        <button onClick={onClose} className="w-full py-3 bg-[#1E3A5F] text-white rounded-xl font-bold hover:bg-[#162d4a] transition-colors">Get Started →</button>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── BUDGET TAB ───────────────────────────────────────────────
+function BudgetTab({budget,dispatch,toast}) {
+  const [open,setOpen]=useState(null);
+  const [editYTD,setEditYTD]=useState(null);
+  const [ytdVal,setYtdVal]=useState('');
+  const bs = budget;
+  const totalExp = bs.committees.reduce((s,c)=>s+c.exp2026,0);
+  const totalInc = bs.committees.reduce((s,c)=>s+c.inc2026,0);
+  const totalYTDExp = bs.committees.reduce((s,c)=>s+(c.ytdExp||0),0);
+  const totalYTDInc = bs.committees.reduce((s,c)=>s+(c.ytdInc||0),0);
+  const netProjected = totalInc - totalExp;
+  const projYearEnd = bs.startingBalance + netProjected;
+
+  function startEdit(code,field,current) { setEditYTD({code,field}); setYtdVal(String(current||0)); }
+  function saveYTD() {
+    if(!editYTD) return;
+    const n = parseFloat(ytdVal);
+    if(isNaN(n)||n<0) return;
+    dispatch({type:'UPDATE_BUDGET_YTD',code:editYTD.code,field:editYTD.field,value:n});
+    toast('YTD figure updated and saved.');
+    setEditYTD(null);
+  }
+
+  return <div className="px-4 pb-10">
+    {/* Risk Banner */}
+    <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl text-sm text-amber-800 dark:text-amber-200 flex items-start gap-2">
+      <span className="text-lg flex-shrink-0">⚠️</span>
+      <div><strong>Budget Risk:</strong> The $40,000 Black Resident Poll line item in Program is contingent on securing the Government Partners sponsorship ($36,000 target). This represents 42% of the total expense budget. Confirm Government Partners commitment before committing this spend.</div>
+    </div>
+
+    {/* KPI Tiles */}
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      {[
+        {label:'Starting Balance',value:fmt$(bs.startingBalance),sub:'Unity Bank · 2026',color:'text-[#1E3A5F] dark:text-gray-100'},
+        {label:'2026 Income Budget',value:fmt$(totalInc),sub:`${totalInc>0?Math.round(totalYTDInc/totalInc*100):0}% collected YTD`,color:'text-green-600',bar:totalInc>0?Math.round(totalYTDInc/totalInc*100):0,barColor:'#22c55e'},
+        {label:'2026 Expense Budget',value:fmt$(totalExp),sub:`${totalExp>0?Math.round(totalYTDExp/totalExp*100):0}% spent YTD`,color:'text-red-500',bar:totalExp>0?Math.round(totalYTDExp/totalExp*100):0,barColor:'#ef4444'},
+        {label:'Projected Net',value:fmt$(netProjected),sub:`Year-end balance: ${fmt$(projYearEnd)}`,color:netProjected>=0?'text-[#C8A951]':'text-red-500'},
+      ].map(k=>(
+        <div key={k.label} className="bg-white dark:bg-[#1A2E47] rounded-xl border border-[#E2E8F0] dark:border-[#2D4A6B] p-4 shadow-sm">
+          <div className="text-xs text-gray-400 mb-1">{k.label}</div>
+          <div className={`text-xl font-bold ${k.color}`}>{k.value}</div>
+          {k.bar !== undefined && <div className="mt-2"><ProgressBar value={k.bar} color={k.barColor}/></div>}
+          <div className="text-xs text-gray-400 mt-1">{k.sub}</div>
+        </div>
+      ))}
+    </div>
+
+    <div className="mb-2 px-1 text-xs text-gray-400">Click any committee row to expand. Click <strong>Update YTD</strong> to enter actual figures.</div>
+
+    <div className="bg-white dark:bg-[#1A2E47] rounded-xl border border-[#E2E8F0] dark:border-[#2D4A6B] shadow-sm mb-4 overflow-hidden">
+      <div className="px-5 py-3 border-b border-gray-100 dark:border-[#2D4A6B] flex items-center justify-between">
+        <h3 className="font-bold text-[#1E3A5F] dark:text-gray-100 text-sm">2026 Budget by Committee</h3>
+        <span className="text-xs text-gray-400">Total: Exp {fmt$(totalExp)} · Inc {fmt$(totalInc)}</span>
+      </div>
+      {bs.committees.map(c=>{
+        const maxExp = Math.max(...bs.committees.map(x=>x.exp2026));
+        const barW = maxExp>0?Math.round((c.exp2026/maxExp)*100):0;
+        const ytdExpPct = c.exp2026>0?Math.round(((c.ytdExp||0)/c.exp2026)*100):0;
+        const ytdIncPct = c.inc2026>0?Math.round(((c.ytdInc||0)/c.inc2026)*100):0;
+        const isOpen = open===c.code;
+        const color = COMMITTEE_COLORS[c.code]||'#94a3b8';
+        return <div key={c.code} className="border-b border-gray-50 dark:border-[#2D4A6B] last:border-0">
+          <button className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors text-left"
+            onClick={()=>setOpen(isOpen?null:c.code)}>
+            <span className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{background:color}}>{c.code}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm font-semibold text-[#1E3A5F] dark:text-gray-100">{c.name}</span>
+                <div className="flex gap-4 text-xs flex-shrink-0 ml-2">
+                  <span className="text-red-500 font-medium">Exp: {fmt$(c.exp2026)}</span>
+                  {c.inc2026>0 && <span className="text-green-600 font-medium">Inc: {fmt$(c.inc2026)}</span>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-gray-100 dark:bg-[#2D4A6B] rounded-full h-1.5 overflow-hidden">
+                  <div className="h-1.5 rounded-full" style={{width:barW+'%',background:color}}></div>
+                </div>
+                {ytdExpPct>0 && <span className="text-xs text-gray-400 flex-shrink-0">{ytdExpPct}% spent</span>}
+              </div>
+            </div>
+            <span className="text-gray-400 text-xs ml-2">{isOpen?'▲':'▼'}</span>
+          </button>
+          {isOpen && <div className="px-5 pb-4 bg-gray-50 dark:bg-[#0F1F33]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Expenses</p>
+                  {editYTD&&editYTD.code===c.code&&editYTD.field==='ytdExp' ? (
+                    <div className="flex items-center gap-1">
+                      <input type="number" className="w-24 text-xs border rounded-lg px-2 py-1 dark:bg-[#1A2E47] dark:border-[#2D4A6B] dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]" value={ytdVal} onChange={e=>setYtdVal(e.target.value)} autoFocus onKeyDown={e=>{if(e.key==='Enter')saveYTD();if(e.key==='Escape')setEditYTD(null);}} placeholder="0"/>
+                      <button onClick={saveYTD} className="text-xs text-white bg-[#1E3A5F] px-2 py-1 rounded-lg font-bold hover:bg-[#162d4a]">Save</button>
+                      <button onClick={()=>setEditYTD(null)} className="text-xs text-gray-400 hover:text-gray-600 px-1">✕</button>
+                    </div>
+                  ) : (
+                    <button onClick={()=>startEdit(c.code,'ytdExp',c.ytdExp)} className="text-xs text-[#1E3A5F] dark:text-blue-300 hover:underline font-semibold">Update YTD</button>
+                  )}
+                </div>
+                {c.expItems.map(item=>(
+                  <div key={item.n} className="flex justify-between text-xs py-1.5 border-b border-gray-100 dark:border-[#2D4A6B]">
+                    <span className="text-gray-600 dark:text-gray-300 flex-1 mr-2">{item.n}</span>
+                    <span className="font-medium text-[#1E3A5F] dark:text-gray-100 flex-shrink-0">{fmt$(item.p)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between text-xs pt-2 font-bold border-t border-gray-200 dark:border-[#2D4A6B] mt-1">
+                  <span className="text-gray-500">YTD Spent</span>
+                  <span className="text-red-500">{fmt$(c.ytdExp||0)} / {fmt$(c.exp2026)}</span>
+                </div>
+              </div>
+              {c.incItems.length>0 && <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Income</p>
+                  {editYTD&&editYTD.code===c.code&&editYTD.field==='ytdInc' ? (
+                    <div className="flex items-center gap-1">
+                      <input type="number" className="w-24 text-xs border rounded-lg px-2 py-1 dark:bg-[#1A2E47] dark:border-[#2D4A6B] dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]" value={ytdVal} onChange={e=>setYtdVal(e.target.value)} autoFocus onKeyDown={e=>{if(e.key==='Enter')saveYTD();if(e.key==='Escape')setEditYTD(null);}} placeholder="0"/>
+                      <button onClick={saveYTD} className="text-xs text-white bg-[#1E3A5F] px-2 py-1 rounded-lg font-bold hover:bg-[#162d4a]">Save</button>
+                      <button onClick={()=>setEditYTD(null)} className="text-xs text-gray-400 hover:text-gray-600 px-1">✕</button>
+                    </div>
+                  ) : (
+                    <button onClick={()=>startEdit(c.code,'ytdInc',c.ytdInc)} className="text-xs text-[#1E3A5F] dark:text-blue-300 hover:underline font-semibold">Update YTD</button>
+                  )}
+                </div>
+                {c.incItems.map(item=>(
+                  <div key={item.n} className="flex justify-between text-xs py-1.5 border-b border-gray-100 dark:border-[#2D4A6B]">
+                    <span className="text-gray-600 dark:text-gray-300 flex-1 mr-2">{item.n}</span>
+                    <span className="font-medium text-green-600 flex-shrink-0">{fmt$(item.p)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between text-xs pt-2 font-bold border-t border-gray-200 dark:border-[#2D4A6B] mt-1">
+                  <span className="text-gray-500">YTD Collected</span>
+                  <span className="text-green-600">{fmt$(c.ytdInc||0)} / {fmt$(c.inc2026)}</span>
+                </div>
+              </div>}
+            </div>
+          </div>}
+        </div>;
+      })}
+    </div>
+
+    {/* 2025 vs 2026 Comparison */}
+    <div className="bg-white dark:bg-[#1A2E47] rounded-xl border border-[#E2E8F0] dark:border-[#2D4A6B] shadow-sm overflow-hidden">
+      <div className="px-5 py-3 border-b border-gray-100 dark:border-[#2D4A6B]">
+        <h3 className="font-bold text-[#1E3A5F] dark:text-gray-100 text-sm">2025 Actual vs. 2026 Proposed</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead><tr className="border-b border-gray-100 dark:border-[#2D4A6B] bg-gray-50 dark:bg-[#0F1F33]">
+            <th className="text-left px-4 py-2.5 font-bold text-gray-500 uppercase tracking-wide">Committee</th>
+            <th className="text-right px-4 py-2.5 font-bold text-gray-500 uppercase tracking-wide">2025 Exp</th>
+            <th className="text-right px-4 py-2.5 font-bold text-gray-500 uppercase tracking-wide">2026 Exp</th>
+            <th className="text-right px-4 py-2.5 font-bold text-gray-500 uppercase tracking-wide">2025 Inc</th>
+            <th className="text-right px-4 py-2.5 font-bold text-gray-500 uppercase tracking-wide">2026 Inc</th>
+          </tr></thead>
+          <tbody>
+            {bs.committees.map(c=>(
+              <tr key={c.code} className="border-b border-gray-50 dark:border-[#2D4A6B] hover:bg-gray-50 dark:hover:bg-[#2D4A6B]">
+                <td className="px-4 py-2.5 font-semibold text-[#1E3A5F] dark:text-gray-100">{c.name}</td>
+                <td className="px-4 py-2.5 text-right text-gray-400">{fmt$(c.exp2025)}</td>
+                <td className="px-4 py-2.5 text-right font-bold text-red-500">{fmt$(c.exp2026)}</td>
+                <td className="px-4 py-2.5 text-right text-gray-400">{c.inc2025>0?fmt$(c.inc2025):'—'}</td>
+                <td className="px-4 py-2.5 text-right font-bold text-green-600">{c.inc2026>0?fmt$(c.inc2026):'—'}</td>
+              </tr>
+            ))}
+            <tr className="bg-[#1E3A5F] text-white">
+              <td className="px-4 py-3 font-bold">TOTAL</td>
+              <td className="px-4 py-3 text-right font-bold">{fmt$(bs.committees.reduce((s,c)=>s+c.exp2025,0))}</td>
+              <td className="px-4 py-3 text-right font-bold text-[#C8A951]">{fmt$(totalExp)}</td>
+              <td className="px-4 py-3 text-right font-bold">{fmt$(bs.committees.reduce((s,c)=>s+c.inc2025,0))}</td>
+              <td className="px-4 py-3 text-right font-bold text-[#C8A951]">{fmt$(totalInc)}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>;
@@ -806,6 +932,8 @@ function App() {
   const [showRec,setShowRec]=useState(false);
   const [showInfo,setShowInfo]=useState(false);
   const [showWelcome,setShowWelcome]=useState(false);
+  const [showWorkload,setShowWorkload]=useState(false);
+  const [showSponsor,setShowSponsor]=useState(false);
   const [selected,setSelected]=useState([]);
   const [conf,setConf]=useState(null);
   const [saveStatus,setSaveStatus]=useState('saved');
@@ -823,7 +951,7 @@ function App() {
       if(hash){const d=LZString.decompressFromEncodedURIComponent(hash);if(d){const p=JSON.parse(d);if(p&&p.tasks){dispatch({type:'LOAD',state:p});toast('Board loaded from shared link.');return;}}}
     }catch(e){}
     try {
-      const s=localStorage.getItem('nfbpa_v6');
+      const s=localStorage.getItem('nfbpa_v7');
       if(s){const p=JSON.parse(s);if(p&&p.tasks){dispatch({type:'LOAD',state:p});return;}}
     }catch(e){}
     setShowWelcome(true);
@@ -833,7 +961,7 @@ function App() {
   useEffect(()=>{
     setSaveStatus('saving');
     clearTimeout(saveRef.current);
-    saveRef.current=setTimeout(()=>{try{localStorage.setItem('nfbpa_v6',JSON.stringify(present));setSaveStatus('saved');}catch(e){setSaveStatus('error');}},300);
+    saveRef.current=setTimeout(()=>{try{localStorage.setItem('nfbpa_v7',JSON.stringify(present));setSaveStatus('saved');}catch(e){setSaveStatus('error');}},300);
     clearTimeout(urlRef.current);
     urlRef.current=setTimeout(()=>{try{window.history.replaceState(null,'','#'+LZString.compressToEncodedURIComponent(JSON.stringify(present)));}catch(e){}},500);
   },[present]);
@@ -844,14 +972,23 @@ function App() {
     return ()=>clearInterval(cpRef.current);
   },[]);
 
+  // Dark mode persist
+  useEffect(()=>{
+    try{const d=localStorage.getItem('nfbpa_dark');if(d)setDark(d==='1');}catch(e){}
+  },[]);
+  useEffect(()=>{
+    try{localStorage.setItem('nfbpa_dark',dark?'1':'0');}catch(e){}
+  },[dark]);
+
   // Keyboard shortcuts
   useEffect(()=>{
     const h=e=>{
       const inInput=e.target.matches('input,textarea,select');
-      if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();dispatch({type:'UNDO'});toast('Undone.');}
-      else if(((e.ctrlKey||e.metaKey)&&e.key==='y')||((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='z')){e.preventDefault();dispatch({type:'REDO'});toast('Redone.');}
+      if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();dispatch({type:'UNDO'});toast('↩ Undone.');}
+      else if(((e.ctrlKey||e.metaKey)&&e.key==='y')||((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='z')){e.preventDefault();dispatch({type:'REDO'});toast('↪ Redone.');}
       else if(e.key==='n'&&!inInput&&!e.ctrlKey){setAdding(true);}
-      else if(e.key==='Escape'){setEditTask(null);setAdding(false);setShowBin(false);setShowRec(false);setShowInfo(false);setShowWelcome(false);}
+      else if(e.key==='f'&&!inInput&&!e.ctrlKey){e.preventDefault();document.querySelector('input[placeholder*="Search"]')?.focus();}
+      else if(e.key==='Escape'){setEditTask(null);setAdding(false);setShowBin(false);setShowRec(false);setShowInfo(false);setShowWelcome(false);setShowWorkload(false);setShowSponsor(false);}
     };
     window.addEventListener('keydown',h);
     return ()=>window.removeEventListener('keydown',h);
@@ -889,11 +1026,9 @@ function App() {
   const daysToAnniv=daysUntil('2026-06-05');
   const hasFilters=search||fPri!=='All'||fOwner!=='All'||fMs!=='All'||fStatus!=='All';
 
-  // Native drag-and-drop handlers
   function handleDragOver(e,colId) { e.preventDefault(); e.dataTransfer.dropEffect='move'; setDragOver(colId); }
   function handleDrop(e,colId) { e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(id){dispatch({type:'MOVE_TASK',id,status:colId});toast('Task moved.');} setDragOver(null); }
   function handleDragLeave(e) { if(!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }
-
   function handleSelect(id,checked){setSelected(s=>checked?[...s,id]:s.filter(x=>x!==id));}
   function handleRemove(id){setConf({msg:'Move this task to the Recycle Bin? You can restore it anytime within 30 days.',onYes:()=>{dispatch({type:'SOFT_DELETE',id});toast('Task moved to Recycle Bin.');}});}
   function handleShare(){navigator.clipboard.writeText(window.location.href).then(()=>toast('Link copied! Anyone with this link can view the board.')).catch(()=>toast('Copy the URL from your browser address bar.','warn'));}
@@ -905,6 +1040,7 @@ function App() {
       {/* HEADER */}
       <header className="bg-white dark:bg-[#1A2E47] border-b border-[#E2E8F0] dark:border-[#2D4A6B] sticky top-0 z-50 shadow-sm no-print">
         <div className="flex items-center justify-between px-4 py-2 gap-2 flex-wrap">
+          {/* Logo + Title */}
           <div className="flex items-center gap-3">
             {LOGO ? <img src={LOGO} alt="NFBPA Greater Houston" className="h-10 w-auto" style={{filter:dark?'invert(1)':'none'}}/> : <div className="font-bold text-[#1E3A5F] text-lg">NFBPA</div>}
             <div className="hidden sm:block">
@@ -912,46 +1048,49 @@ function App() {
               <div className="text-xs text-gray-400">Program Dashboard 2026</div>
             </div>
           </div>
+
+          {/* Action Buttons */}
           <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Save status */}
             <div className={`flex items-center gap-1.5 text-xs mr-1 ${saveStatus==='saved'?'text-green-600':saveStatus==='error'?'text-red-500':'text-amber-500'}`}>
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${saveStatus==='saved'?'bg-green-500':saveStatus==='error'?'bg-red-500':'bg-amber-400 animate-pulse'}`}></span>
-              <span className="hidden lg:inline">{saveStatus==='saved'?'Saved':'Saving...'}</span>
+              <span className="hidden lg:inline font-medium">{saveStatus==='saved'?'Saved':'Saving...'}</span>
             </div>
-            <Tip label="Undo last action — reverses any mistake (Ctrl+Z)">
-              <button onClick={()=>{dispatch({type:'UNDO'});toast('\u21a9 Undone — action reversed.');}} disabled={!state.past.length}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg border-2 border-[#C8A951] text-[#1E3A5F] dark:text-[#C8A951] bg-white dark:bg-[#1A2E47] hover:bg-[#C8A951] hover:text-white dark:hover:bg-[#C8A951] dark:hover:text-[#1E3A5F] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm">
-                &#8617; Undo
-              </button>
-            </Tip>
-            <Tip label="Redo — restore what was undone (Ctrl+Y)">
-              <button onClick={()=>{dispatch({type:'REDO'});toast('\u21aa Redone.');}} disabled={!state.future.length}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-[#2D4A6B] text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2D4A6B] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                &#8618; Redo
-              </button>
-            </Tip>
-            <Tip label="Add a new task (press N)">
-              <button onClick={()=>setAdding(true)} className="px-3 py-1.5 bg-[#1E3A5F] text-white rounded-lg text-xs font-bold hover:bg-[#162d4a] transition-colors">+ Add Task</button>
-            </Tip>
-            <Tip label="Copy a shareable link to this board">
-              <button onClick={handleShare} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors">Share</button>
-            </Tip>
-            <Tip label="Export all tasks to CSV spreadsheet">
-              <button onClick={()=>{exportCSV(tasks,milestones);toast('CSV downloaded.');}} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors">Export</button>
-            </Tip>
-            <Tip label="View removed tasks (restore within 30 days)">
-              <button onClick={()=>setShowBin(true)} className="relative px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors">
-                Bin{recycleBin.length>0&&<span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">{recycleBin.length}</span>}
-              </button>
-            </Tip>
-            <Tip label="Restore the board to an earlier auto-saved state">
-              <button onClick={()=>setShowRec(true)} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors">Recover</button>
-            </Tip>
-            <Tip label="Board roster, sponsors, calendar and help">
-              <button onClick={()=>setShowInfo(true)} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors">Info</button>
-            </Tip>
-            <Tip label={dark?'Switch to light mode':'Switch to dark mode'}>
-              <button onClick={()=>setDark(d=>!d)} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors">{dark?'Light':'Dark'}</button>
-            </Tip>
+
+            {/* UNDO — prominent gold button */}
+            <button onClick={()=>{dispatch({type:'UNDO'});toast('↩ Undone.');}} disabled={!state.past.length}
+              className="undo-btn" title="Undo last action (Ctrl+Z)">↩ Undo</button>
+            <button onClick={()=>{dispatch({type:'REDO'});toast('↪ Redone.');}} disabled={!state.future.length}
+              className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-100 dark:hover:bg-[#2D4A6B] disabled:opacity-30 transition-colors font-medium" title="Redo (Ctrl+Y)">↪ Redo</button>
+
+            {/* Add Task */}
+            <button onClick={()=>setAdding(true)} className="px-3 py-1.5 bg-[#1E3A5F] text-white rounded-lg text-xs font-bold hover:bg-[#162d4a] transition-colors" title="Add new task (press N)">+ Add Task</button>
+
+            {/* Share */}
+            <button onClick={handleShare} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors font-medium" title="Copy shareable link">🔗 Share</button>
+
+            {/* Export */}
+            <button onClick={()=>{exportCSV(tasks,milestones);toast('CSV downloaded.');}} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors font-medium" title="Export tasks to CSV">⬇ Export</button>
+
+            {/* Workload */}
+            <button onClick={()=>setShowWorkload(true)} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors font-medium" title="View owner workload">👤 Workload</button>
+
+            {/* Sponsor Tracker */}
+            <button onClick={()=>setShowSponsor(true)} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors font-medium" title="Sponsorship progress tracker">💼 Sponsors</button>
+
+            {/* Bin */}
+            <button onClick={()=>setShowBin(true)} className="relative px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors font-medium" title="Recycle Bin — restore removed tasks">
+              🗑 Bin{recycleBin.length>0&&<span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">{recycleBin.length}</span>}
+            </button>
+
+            {/* Recover */}
+            <button onClick={()=>setShowRec(true)} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors font-medium" title="Restore board to an earlier auto-saved state">🔄 Recover</button>
+
+            {/* Info */}
+            <button onClick={()=>setShowInfo(true)} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors font-medium" title="Board roster, sponsors, calendar, help">🏛 Info</button>
+
+            {/* Dark mode */}
+            <button onClick={()=>setDark(d=>!d)} className="px-2.5 py-1.5 text-xs border border-[#E2E8F0] dark:border-[#2D4A6B] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2D4A6B] transition-colors" title="Toggle dark/light mode">{dark?'☀️':'🌙'}</button>
           </div>
         </div>
       </header>
@@ -960,11 +1099,11 @@ function App() {
       <div className="bg-[#1E3A5F] text-white px-5 py-3 no-print">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <span className="text-[#C8A951] font-bold text-sm">40th Anniversary Weekend — June 5-7, 2026</span>
+            <span className="text-[#C8A951] font-bold text-sm">🎉 40th Anniversary Weekend — June 5–7, 2026</span>
             <span className="text-blue-200 text-xs ml-3 hidden md:inline">Fri: Welcome Social · Sat: Public Admin Day + Find Your Vibe · Sun: Leadership Panel + Luncheon (10 Awards)</span>
           </div>
           <div className="text-right flex-shrink-0">
-            <div className="text-[#C8A951] font-bold text-xl">{daysToAnniv !== null ? daysToAnniv+' days away' : ''}</div>
+            <div className="text-[#C8A951] font-bold text-xl">{daysToAnniv !== null && daysToAnniv > 0 ? daysToAnniv+' days away' : daysToAnniv===0 ? 'Today!' : 'Event has passed'}</div>
             <div className="text-blue-200 text-xs">Event Budget: $7,500 · 2026 Total Budget: $95,658</div>
           </div>
         </div>
@@ -973,7 +1112,7 @@ function App() {
       {/* TAB BAR */}
       <div className="bg-white dark:bg-[#1A2E47] border-b border-[#E2E8F0] dark:border-[#2D4A6B] px-4 no-print">
         <div className="flex">
-          {[['board','Task Board'],['budget','Budget & Finance']].map(([id,label])=>(
+          {[['board','📋 Task Board'],['budget','💰 Budget & Finance']].map(([id,label])=>(
             <button key={id} onClick={()=>setTab(id)}
               className={`py-3 px-5 text-sm font-semibold border-b-2 transition-colors ${tab===id?'border-[#C8A951] text-[#1E3A5F] dark:text-gray-100':'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}>
               {label}
@@ -1018,8 +1157,8 @@ function App() {
             </select>
           ))}
           {hasFilters && <button onClick={()=>{setSearch('');setFPri('All');setFOwner('All');setFMs('All');setFStatus('All');}}
-            className="text-xs text-gray-400 hover:text-red-500 px-2 py-2 transition-colors font-medium">Clear Filters</button>}
-          <span className="text-xs text-gray-400 ml-1">{filtered.length} of {tasks.length} tasks</span>
+            className="text-xs text-gray-400 hover:text-red-500 px-2 py-2 transition-colors font-medium">✕ Clear Filters</button>}
+          <span className="text-xs text-gray-400 ml-1 font-medium">{filtered.length} of {tasks.length} tasks</span>
         </div>
 
         {/* BULK ACTIONS */}
@@ -1027,14 +1166,14 @@ function App() {
           <div className="mx-4 mb-3 flex items-center gap-3 bg-[#1E3A5F] text-white px-4 py-2.5 rounded-xl text-sm no-print">
             <span className="font-semibold">{selected.length} task{selected.length>1?'s':''} selected</span>
             <button onClick={()=>{dispatch({type:'BULK_COMPLETE',ids:selected});toast(selected.length+' task(s) marked complete.');setSelected([]);}}
-              className="px-3 py-1.5 bg-green-500 rounded-lg text-xs font-bold hover:bg-green-600 transition-colors">Mark Complete</button>
+              className="px-3 py-1.5 bg-green-500 rounded-lg text-xs font-bold hover:bg-green-600 transition-colors">✓ Mark Complete</button>
             <button onClick={()=>setConf({msg:'Move '+selected.length+' task(s) to the Recycle Bin?',onYes:()=>{dispatch({type:'BULK_REMOVE',ids:selected});toast(selected.length+' task(s) moved to Recycle Bin.');setSelected([]);}})}
-              className="px-3 py-1.5 bg-red-500 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors">Remove</button>
+              className="px-3 py-1.5 bg-red-500 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors">Remove Selected</button>
             <button onClick={()=>setSelected([])} className="ml-auto text-blue-200 hover:text-white text-xs font-medium">Deselect All</button>
           </div>
         )}
 
-        {/* KANBAN BOARD — native HTML5 drag-and-drop */}
+        {/* KANBAN BOARD */}
         <div className="flex gap-3 px-4 pb-10 overflow-x-auto hide-scrollbar">
           {COLS.map(col=>{
             const colTasks=filtered.filter(t=>t.status===col.id);
@@ -1047,8 +1186,8 @@ function App() {
                 </div>
                 <span className="text-xs bg-gray-100 dark:bg-[#2D4A6B] text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full font-bold">{colTasks.length}</span>
               </div>
-              <div className="w-full h-1 rounded-full mb-3" style={{background:col.color+'33'}}>
-                <div className="h-1 rounded-full" style={{background:col.color,width:tasks.length?Math.round(colTasks.length/Math.max(tasks.length,1)*100)+'%':'0%'}}></div>
+              <div className="w-full h-1 rounded-full mb-3" style={{background:col.color+'22'}}>
+                <div className="h-1 rounded-full transition-all duration-500" style={{background:col.color,width:tasks.length?Math.round(colTasks.length/Math.max(tasks.length,1)*100)+'%':'0%'}}></div>
               </div>
               <div
                 onDragOver={e=>handleDragOver(e,col.id)}
@@ -1057,7 +1196,7 @@ function App() {
                 className={`min-h-24 rounded-xl transition-all p-1 ${isOver?'drag-over':''}`}
               >
                 {colTasks.length===0 && !isOver && (
-                  <div className="text-center py-6 text-gray-300 text-xs">
+                  <div className="text-center py-8 text-gray-200 dark:text-gray-600 text-xs border-2 border-dashed border-gray-100 dark:border-[#2D4A6B] rounded-xl">
                     <div className="text-2xl mb-1">○</div>
                     <p>Drop tasks here</p>
                   </div>
@@ -1090,6 +1229,8 @@ function App() {
         onClose={()=>setShowRec(false)}/>}
       {showInfo && <BoardInfo onClose={()=>setShowInfo(false)}/>}
       {showWelcome && <WelcomeBanner onClose={()=>setShowWelcome(false)}/>}
+      {showWorkload && <WorkloadView tasks={tasks} milestones={milestones} onClose={()=>setShowWorkload(false)}/>}
+      {showSponsor && <SponsorTracker tasks={tasks} onClose={()=>setShowSponsor(false)}/>}
       {conf && <Confirm msg={conf.msg} onYes={()=>{conf.onYes();setConf(null);}} onNo={()=>setConf(null)}/>}
     </div>
   </div>;
