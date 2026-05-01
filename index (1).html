@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFBPA 2026 Board Execution Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .header .subtitle { font-size: 0.9rem; opacity: 0.9; }
+        .sync-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        .sync-status.synced { background: #10b981; }
+        .sync-status.error { background: #ef4444; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 0.8rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab:hover { color: #2563eb; }
+        .tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .data-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .data-table h3 {
+            padding: 1rem 1.5rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: #f8fafc;
+            padding: 0.8rem 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:hover { background: #f8fafc; }
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .status-completed { background: #dcfce7; color: #166534; }
+        .status-in-progress { background: #fef3c7; color: #92400e; }
+        .status-not-started { background: #f1f5f9; color: #475569; }
+        .refresh-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 1rem;
+        }
+        .refresh-btn:hover { background: #1d4ed8; }
+        .loading { text-align: center; padding: 3rem; color: #64748b; }
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .setup-code {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>NFBPA 2026 Board Execution Dashboard</h1>
+        <div class="subtitle">
+            Live Collaborative Data | Greater Houston Chapter
+            <span id="syncStatus" class="sync-status">⚡ Initializing...</span>
+            <button class="refresh-btn" onclick="refreshAllData()">🔄 Refresh</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="errorContainer"></div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="openTab('membership')">Membership</button>
+            <button class="tab" onclick="openTab('sponsorship')">Sponsorship</button>
+            <button class="tab" onclick="openTab('anniversary')">40th Anniversary</button>
+            <button class="tab" onclick="openTab('board')">Board Roles</button>
+            <button class="tab" onclick="openTab('revenue')">Revenue</button>
+            <button class="tab" onclick="openTab('setup')">⚙️ Setup</button>
+        </div>
+
+        <div id="membership" class="tab-content active">
+            <div class="data-table">
+                <h3>Membership Revenue Goals</h3>
+                <div id="membershipTable" class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <div id="sponsorship" class="tab-content">
+            <div class="data-table">
+                <h3>Sponsorship Pipeline & Governance</h3>
+                <div id="sponsorshipTable" class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <div id="anniversary" class="tab-content">
+            <div class="data-table">
+                <h3>40th Anniversary Weekend Plan</h3>
+                <div id="anniversaryTable" class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <div id="board" class="tab-content">
+            <div class="data-table">
+                <h3>Board Role Execution Plan</h3>
+                <div id="boardTable" class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <div id="revenue" class="tab-content">
+            <div class="data-table">
+                <h3>Revenue & Budget Execution Summary</h3>
+                <div id="revenueTable" class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <div id="setup" class="tab-content">
+            <div class="data-table">
+                <h3>📋 Setup Instructions</h3>
+                <div style="padding: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem;">Step 1: Add Apps Script (3 min)</h4>
+                    <ol style="margin: 1rem 0 1rem 1.5rem;">
+                        <li>Open your Google Sheet</li>
+                        <li>Extensions → Apps Script</li>
+                        <li>Delete default code</li>
+                        <li>Paste the script (see below)</li>
+                        <li>Save (Ctrl+S)</li>
+                    </ol>
+                    
+                    <h4 style="margin: 1.5rem 0 1rem;">Apps Script Code:</h4>
+                    <div class="setup-code">
+function doGet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const data = {
+    membership: getSheetData('membership_revenue'),
+    sponsorship: getSheetData('sponsorship_pipeline'),
+    anniversary: getSheetData('anniversary_events'),
+    board: getSheetData('board_roles'),
+    revenue: getSheetData('revenue_summary')
+  };
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getSheetData(sheetName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) return [];
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  return data.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = row[i] || '');
+    return obj;
+  });
+}
+                    </div>
+                    
+                    <h4 style="margin: 1.5rem 0 1rem;">Step 2: Deploy (2 min)</h4>
+                    <ol style="margin: 1rem 0 1rem 1.5rem;">
+                        <li>Click "Deploy" → "New deployment"</li>
+                        <li>Click gear icon → Select "Web app"</li>
+                        <li>Description: "NFBPA Dashboard API"</li>
+                        <li>Execute as: "Me"</li>
+                        <li>Who has access: "Anyone"</li>
+                        <li>Click "Deploy"</li>
+                        <li>Copy the Web app URL</li>
+                    </ol>
+                    
+                    <h4 style="margin: 1.5rem 0 1rem;">Step 3: Configure Dashboard (1 min)</h4>
+                    <ol style="margin: 1rem 0 1rem 1.5rem;">
+                        <li>Open this HTML file in text editor</li>
+                        <li>Find line: <code>const APPS_SCRIPT_URL = 'YOUR_URL_HERE';</code></li>
+                        <li>Paste your Web app URL</li>
+                        <li>Save file</li>
+                    </ol>
+                    
+                    <h4 style="margin: 1.5rem 0 1rem;">✅ Done!</h4>
+                    <p>Open dashboard in browser → Data loads automatically</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Embedded data - works without Apps Script setup
+        const EMBEDDED_DATA = {
+            membership: [
+            {
+                        "Category": "Membership Rebates",
+                        "Budget Basis": "120 x $35",
+                        "Target Revenue": "",
+                        "Committed/Collected": "",
+                        "Gap": "",
+                        "Member Count Target": "",
+                        "Actual Count": "",
+                        "Owner": "Dr. Ericka Brown",
+                        "Asset/Action": "Lapsed member reactivation list requested and outreach launched",
+                        "Status": "Not Started"
+            },
+            {
+                        "Category": "TSU Student Dues",
+                        "Budget Basis": "10 x $35",
+                        "Target Revenue": "",
+                        "Committed/Collected": "",
+                        "Gap": "",
+                        "Member Count Target": "",
+                        "Actual Count": "",
+                        "Owner": "Dr. Ericka Brown",
+                        "Asset/Action": "Revisit TSU MOU with Dr. Michael O. Adams",
+                        "Status": "Not Started"
+            },
+            {
+                        "Category": "Associate Memberships",
+                        "Budget Basis": "2 x $1,100",
+                        "Target Revenue": "",
+                        "Committed/Collected": "",
+                        "Gap": "",
+                        "Member Count Target": "",
+                        "Actual Count": "",
+                        "Owner": "Dr. Ericka Brown",
+                        "Asset/Action": "Government/corporate partner prospect list + asks",
+                        "Status": "Not Started"
+            },
+            {
+                        "Category": "Retiree Memberships",
+                        "Budget Basis": "5 x $135",
+                        "Target Revenue": "",
+                        "Committed/Collected": "",
+                        "Gap": "",
+                        "Member Count Target": "",
+                        "Actual Count": "",
+                        "Owner": "Roselynn Ruth",
+                        "Asset/Action": "Past presidents / senior leg renewal campaign",
+                        "Status": "Not Started"
+            },
+            {
+                        "Category": "Total Membership",
+                        "Budget Basis": "",
+                        "Target Revenue": "",
+                        "Committed/Collected": "",
+                        "Gap": "",
+                        "Member Count Target": "",
+                        "Actual Count": "",
+                        "Owner": "",
+                        "Asset/Action": "",
+                        "Status": ""
+            },
+            {
+                        "Category": "Campaign Assets / Dependencies",
+                        "Budget Basis": "",
+                        "Target Revenue": "",
+                        "Committed/Collected": "",
+                        "Gap": "",
+                        "Member Count Target": "",
+                        "Actual Count": "",
+                        "Owner": "",
+                        "Asset/Action": "",
+                        "Status": ""
+            }
+],
+            sponsorship: [
+            {
+                        "Sponsor": "Care Solace",
+                        "Tier": "Diamond",
+                        "Amount": 10000,
+                        "Status": "Secured",
+                        "Lead": "President Duncan"
+            },
+            {
+                        "Sponsor": "Cigna",
+                        "Tier": "Gold",
+                        "Amount": 7500,
+                        "Status": "Pending",
+                        "Lead": "President Duncan"
+            },
+            {
+                        "Sponsor": "Infrastructure Engineering",
+                        "Tier": "Gold",
+                        "Amount": 5000,
+                        "Status": "Pending",
+                        "Lead": "Gethorio Davidson"
+            },
+            {
+                        "Sponsor": "Gov Partners/Black Agenda",
+                        "Tier": "Diamond",
+                        "Amount": 10000,
+                        "Status": "Pending",
+                        "Lead": "Brandon Denton"
+            },
+            {
+                        "Sponsor": "Additional Pipeline",
+                        "Tier": "TBD",
+                        "Amount": 0,
+                        "Status": "Not Started",
+                        "Lead": "TBD"
+            },
+            {
+                        "Sponsor": "Additional Pipeline",
+                        "Tier": "TBD",
+                        "Amount": 0,
+                        "Status": "Not Started",
+                        "Lead": "TBD"
+            },
+            {
+                        "Sponsor": "Additional Pipeline",
+                        "Tier": "TBD",
+                        "Amount": 0,
+                        "Status": "Not Started",
+                        "Lead": "TBD"
+            }
+],
+            anniversary: [
+            {
+                        "Day": "Friday",
+                        "Event": "Kickoff Social",
+                        "Time": "6:00 PM - 9:00 PM",
+                        "Location": "Fancys",
+                        "Budget": 8333,
+                        "Status": "Confirmed"
+            },
+            {
+                        "Day": "Friday",
+                        "Event": "Networking",
+                        "Time": "6:00 PM - 9:00 PM",
+                        "Location": "Fancys",
+                        "Budget": 0,
+                        "Status": "Confirmed"
+            },
+            {
+                        "Day": "Saturday",
+                        "Event": "Public Admin Day",
+                        "Time": "10:00 AM - 2:00 PM",
+                        "Location": "Harris County Pct 4 HQ",
+                        "Budget": 8333,
+                        "Status": "Confirmed"
+            },
+            {
+                        "Day": "Saturday",
+                        "Event": "Career Panel",
+                        "Time": "10:00 AM - 2:00 PM",
+                        "Location": "Harris County Pct 4 HQ",
+                        "Budget": 0,
+                        "Status": "Confirmed"
+            },
+            {
+                        "Day": "Sunday",
+                        "Event": "Scholarship Luncheon",
+                        "Time": "11:00 AM - 2:00 PM",
+                        "Location": "Junior League Houston",
+                        "Budget": 8334,
+                        "Status": "Confirmed"
+            },
+            {
+                        "Day": "Sunday",
+                        "Event": "Awards Ceremony",
+                        "Time": "11:00 AM - 2:00 PM",
+                        "Location": "Junior League Houston",
+                        "Budget": 0,
+                        "Status": "Confirmed"
+            }
+],
+            board: [
+            {
+                        "Role": "President",
+                        "Name": "Cherrelle J. Duncan",
+                        "Budget": 0,
+                        "Key Deliverable": "40th Anniversary",
+                        "Status": "In Progress"
+            },
+            {
+                        "Role": "1st VP",
+                        "Name": "Dr. Ericka Brown",
+                        "Budget": 13700,
+                        "Key Deliverable": "Civic Engagement",
+                        "Status": "Not Started"
+            },
+            {
+                        "Role": "2nd VP Programs",
+                        "Name": "Gethorio Davidson",
+                        "Budget": 56300,
+                        "Key Deliverable": "Programming Calendar",
+                        "Status": "In Progress"
+            },
+            {
+                        "Role": "Treasurer",
+                        "Name": "Anitra Spurlock",
+                        "Budget": 0,
+                        "Key Deliverable": "Financial Management",
+                        "Status": "In Progress"
+            },
+            {
+                        "Role": "Secretary",
+                        "Name": "Rachel Gutierrez",
+                        "Budget": 0,
+                        "Key Deliverable": "Meeting Minutes",
+                        "Status": "In Progress"
+            },
+            {
+                        "Role": "Assistant Secretary",
+                        "Name": "Deja Evans",
+                        "Budget": 0,
+                        "Key Deliverable": "Records Management",
+                        "Status": "In Progress"
+            },
+            {
+                        "Role": "Parliamentarian",
+                        "Name": "Danny Norris",
+                        "Budget": 0,
+                        "Key Deliverable": "Bylaws Compliance",
+                        "Status": "Completed"
+            }
+],
+            revenue: [
+            {
+                        "Revenue Channel": "Membership",
+                        "Target": 16425,
+                        "Committed": 0,
+                        "Gap": 16425,
+                        "Owner": "Roselynn Ruth"
+            },
+            {
+                        "Revenue Channel": "Programming",
+                        "Target": 56500,
+                        "Committed": 0,
+                        "Gap": 56500,
+                        "Owner": "Gethorio Davidson"
+            },
+            {
+                        "Revenue Channel": "Sponsorship",
+                        "Target": 56500,
+                        "Committed": 10000,
+                        "Gap": 46500,
+                        "Owner": "President Duncan"
+            },
+            {
+                        "Revenue Channel": "Fundraising",
+                        "Target": 17700,
+                        "Committed": 0,
+                        "Gap": 17700,
+                        "Owner": "TBD"
+            },
+            {
+                        "Revenue Channel": "Scholarship",
+                        "Target": 4820,
+                        "Committed": 0,
+                        "Gap": 4820,
+                        "Owner": "Dr. Kimberly Henderson"
+            },
+            {
+                        "Revenue Channel": "Community Engagement",
+                        "Target": 3250,
+                        "Committed": 0,
+                        "Gap": 3250,
+                        "Owner": "TBD"
+            },
+            {
+                        "Revenue Channel": "Conference",
+                        "Target": 350,
+                        "Committed": 0,
+                        "Gap": 350,
+                        "Owner": "President Duncan"
+            }
+]
+        };
+        
+
+        // ============================================
+        // CONFIGURATION - Paste your Apps Script URL
+        // ============================================
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzB1YlZP8uYkjMNCx7-z9bQW3pR0B2Yxkg9MRCd0Ti0kGHXJzGK4b2_N3AP5PGAf8WqAw/exec';
+        const REFRESH_INTERVAL = 30000; // 30 seconds
+        
+        // ============================================
+        // DATA LOADING
+        // ============================================
+        async function loadAllData() {
+            try {
+                updateSyncStatus('⏳ Loading...');
+                showError(null);
+                
+                // Use embedded data if not configured
+                if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+                    renderTable('membershipTable', EMBEDDED_DATA.membership);
+                    renderTable('sponsorshipTable', EMBEDDED_DATA.sponsorship);
+                    renderTable('anniversaryTable', EMBEDDED_DATA.anniversary);
+                    renderTable('boardTable', EMBEDDED_DATA.board);
+                    renderTable('revenueTable', EMBEDDED_DATA.revenue);
+                    updateSyncStatus('✅ Showing Embedded Data');
+                    return;
+                }
+                
+                const response = await fetch(APPS_SCRIPT_URL);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                
+                renderTable('membershipTable', data.membership || []);
+                renderTable('sponsorshipTable', data.sponsorship || []);
+                renderTable('anniversaryTable', data.anniversary || []);
+                renderTable('boardTable', data.board || []);
+                renderTable('revenueTable', data.revenue || []);
+                
+                updateSyncStatus(`✅ Synced ${new Date().toLocaleTimeString()}`);
+            } catch (error) {
+                console.error('Load error:', error);
+                showError(`Sync failed: ${error.message}. Check Setup tab.`);
+                updateSyncStatus('❌ Error');
+            }
+        }
+        
+        function renderTable(elementId, data) {
+            const el = document.getElementById(elementId);
+            if (!el || !data.length) {
+                el.innerHTML = '<div class="loading">No data</div>';
+                return;
+            }
+            
+            const columns = Object.keys(data[0]);
+            const html = `
+                <table>
+                    <thead>
+                        <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(row => `
+                            <tr>${columns.map(col => {
+                                const val = row[col];
+                                if (typeof val === 'string') {
+                                    const lower = val.toLowerCase();
+                                    if (lower.includes('completed')) {
+                                        return `<td><span class="status-badge status-completed">${val}</span></td>`;
+                                    } else if (lower.includes('in progress')) {
+                                        return `<td><span class="status-badge status-in-progress">${val}</span></td>`;
+                                    } else if (lower.includes('not started')) {
+                                        return `<td><span class="status-badge status-not-started">${val}</span></td>`;
+                                    }
+                                }
+                                return `<td>${val}</td>`;
+                            }).join('')}</tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            el.innerHTML = html;
+        }
+        
+        function openTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function updateSyncStatus(text) {
+            const el = document.getElementById('syncStatus');
+            el.textContent = text;
+            el.className = 'sync-status ' + (text.includes('✅') ? 'synced' : text.includes('❌') ? 'error' : '');
+        }
+        
+        function showError(msg) {
+            document.getElementById('errorContainer').innerHTML = 
+                msg ? `<div class="error-message">${msg}</div>` : '';
+        }
+        
+        function refreshAllData() {
+            loadAllData();
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+            setInterval(loadAllData, REFRESH_INTERVAL);
+        });
+    </script>
+</body>
+</html>
